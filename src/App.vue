@@ -1,9 +1,12 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div class="bg-red-100 text-black text-3xl p-10">
-    TEST TAILWIND
-  </div>
+  <NavBar />
+  <HeroSection />
+  <RecipeSection />
+   <router-view />
 </template>
+
+<script setup>
+import NavBar from "./components/NavBar.vue";
+import HeroSection from "./components/HeroSection.vue";
+import RecipeSection from "./components/RecipeSection.vue";
+</script>
