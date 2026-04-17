@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Home from '../components/Home.vue'
+import Home from '../components/mealsSection.vue'
 import Breakfast from '../components/Breakfast.vue'
 import Lunch from '../components/Lunch.vue'
 
