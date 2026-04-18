@@ -18,7 +18,7 @@ import dessert from '../assets/meals/dessert1.webp'
 </p>
 
     <!-- IMAGE SECTION -->
-    <div class="flex justify-center gap-15">
+    <div class="flex justify-center gap-16 flex-wrap">
 
       <!-- BREAKFAST -->
       <div class="text-center">

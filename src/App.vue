@@ -5,6 +5,7 @@
   <RecipeSection />
    <router-view />
    <CuisineSection />
+   <Dietary />
    </div>
 </template>
 
@@ -13,4 +14,5 @@ import NavBar from "./components/NavBar.vue";
 import HeroSection from "./components/HeroSection.vue";
 import RecipeSection from "./components/RecipeSection.vue";
 import CuisineSection from "./components/CuisineSection.vue";
+import Dietary from './components/Dietary.vue'
 </script>

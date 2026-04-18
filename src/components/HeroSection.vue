@@ -33,7 +33,10 @@
         Whether you're a beginner or an expert, we help you create magic in your kitchen.
       </p>
 
-      
+      <!-- OPTIONAL BUTTON -->
+      <button class="bg-white text-black px-6 py-2 rounded-lg font-semibold hover:bg-gray-200 transition">
+        Explore Recipes
+      </button>
 
     </div>
 
