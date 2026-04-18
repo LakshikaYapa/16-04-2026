@@ -1,6 +1,16 @@
-<script setup>
+<script setup lang="ts">
+import { useRouter } from "vue-router";
+
 import veg from '../assets/meals/dietary/veg.png'
 import nonveg from '../assets/meals/dietary/non veg.png'
+
+// 🔥 router
+const router = useRouter();
+
+// 🔥 navigate function
+const goToDetails = (type: string) => {
+  router.push(`/recipes/${type}`);
+};
 </script>
 
 <template>
@@ -22,7 +32,7 @@ import nonveg from '../assets/meals/dietary/non veg.png'
     <div class="flex justify-center gap-16 flex-wrap">
 
       <!-- Vegetarian -->
-      <div class="text-center">
+      <div class="text-center cursor-pointer" @click="goToDetails('vegetarian')">
         <img 
           :src="veg"
           class="w-64 h-64 object-cover rounded-full mx-auto 
@@ -32,7 +42,7 @@ import nonveg from '../assets/meals/dietary/non veg.png'
       </div>
 
       <!-- Non-Vegetarian -->
-      <div class="text-center">
+      <div class="text-center cursor-pointer" @click="goToDetails('meat')">
         <img 
           :src="nonveg"
           class="w-64 h-64 object-cover rounded-full mx-auto 
