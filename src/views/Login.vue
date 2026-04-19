@@ -32,7 +32,12 @@ export default {
       const user = JSON.parse(localStorage.getItem("user"));
 
       if (user && user.email === this.email && user.password === this.password) {
-        localStorage.setItem("isAuth", true);
+        localStorage.setItem("isAuth", "true");
+
+        if (this.email === "admin@gmail.com") {
+          localStorage.setItem("role", "admin");
+        }
+
         this.$router.push("/");
       } else {
         alert("Invalid email or password");
@@ -43,7 +48,6 @@ export default {
 </script>
 
 <style>
-/* ❗ REMOVE scoped (important) */
 .auth-page {
   height: 100vh;
   background: linear-gradient(135deg, #1e1e2f, #ff7e5f);
