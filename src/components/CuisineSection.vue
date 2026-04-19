@@ -1,10 +1,8 @@
-<<script setup lang="ts">
+<script setup lang="ts">
 import { useRouter } from "vue-router";
 
-// 🔥 router
 const router = useRouter();
 
-// 🔥 cuisines data
 const cuisines = [
   { name: "Italian", image: "/cuisines/Italian.webp" },
   { name: "Asian", image: "/cuisines/Asian.png" },
@@ -12,28 +10,36 @@ const cuisines = [
   { name: "Mexican", image: "/cuisines/Mexican.png" },
 ];
 
-// 🔥 navigate function
 const goToDetails = (type: string) => {
-  router.push(`/recipes/${type.toLowerCase()}`);
+  const isAuth = localStorage.getItem("isAuth");
+
+  if (!isAuth) {
+    const goLogin = confirm(
+      "You need to login first 🔐\n\nPress OK to Login or Cancel to go Home."
+    );
+
+    if (goLogin) {
+      router.push("/login");
+    } else {
+      router.push("/");
+    }
+  } else {
+    router.push(`/recipes/${type.toLowerCase()}`);
+  }
 };
 </script>
 
 <template>
   <section class="bg-black text-white py-0 px-6">
 
-    <!-- TITLE -->
     <h2 class="text-center text-5xl font-bold mb-6 font-serif">
       By Cuisine
     </h2>
 
-    <!-- DESCRIPTION -->
     <p class="text-center text-gray-400 text-lg max-w-2xl mx-auto mb-10">
-      Travel the world through flavors! Explore a diverse collection of cuisines, 
-      from rich and spicy dishes to light and comforting meals. Discover new tastes, 
-      cultures, and culinary traditions all in one place.
+      Explore cuisines from around the world.
     </p>
 
-    <!-- GRID -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 items-center">
 
       <div
