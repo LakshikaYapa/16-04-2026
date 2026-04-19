@@ -4,6 +4,7 @@ import Home from '../views/Home.vue';
 import RecipeDetails from '../views/RecipeDetails.vue';
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
+import RecipeFullDetails from "../views/RecipeFullDetails.vue";
 
 const routes = [
   { path: '/', component: Home },
@@ -17,6 +18,7 @@ const routes = [
 
   { path: '/login', component: Login },
   { path: '/register', component: Register },
+  { path: "/recipe/:id", component: RecipeFullDetails },
 ];
 
 const router = createRouter({
