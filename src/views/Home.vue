@@ -1,6 +1,7 @@
 <template>
   <div>
     <HeroSection/>
+     <RecipeOfTheDay />
     <MealsSection />
     <CuisineSection />
     <Dietary />
@@ -12,4 +13,5 @@ import HeroSection from "../components/HeroSection.vue";
 import MealsSection from "../components/mealsSection.vue";
 import CuisineSection from "../components/CuisineSection.vue";
 import Dietary from "../components/Dietary.vue";
+import RecipeOfTheDay from "../components/RecipeOfTheDay.vue";
 </script>

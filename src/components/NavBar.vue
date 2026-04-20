@@ -32,7 +32,7 @@ export default {
   <nav class="flex justify-between items-center p-4 bg-black text-white">
     
     <div class="flex items-center gap-2 cursor-pointer" @click="$router.push('/')">
-      <img src="/logo/logo1.jpeg" class="h-16" />
+      <img src="/logo/logo1.jpeg" class="h-40" />
     </div>
 
     <ul class="flex gap-10 text-lg font-medium items-center">
