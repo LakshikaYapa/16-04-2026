@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
 import { ref, onMounted } from "vue";
-
+import FeedbackSection from "../components/FeedbackSection.vue";
 const route = useRoute();
 const recipe = ref<any>(null);
 
@@ -91,4 +91,5 @@ onMounted(async () => {
     <p v-else class="text-gray-400">Loading...</p>
 
   </div>
+  <FeedbackSection />
 </template>
