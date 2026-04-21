@@ -32,15 +32,24 @@ export default {
       const user = JSON.parse(localStorage.getItem("user"));
 
       if (user && user.email === this.email && user.password === this.password) {
+
+        // ✅ login status
         localStorage.setItem("isAuth", "true");
 
+        // 🔥 IMPORTANT (this fixes your name issue)
+        localStorage.setItem("userName", user.name);
+        localStorage.setItem("userCountry", user.country);
+
+        // optional admin role
         if (this.email === "admin@gmail.com") {
           localStorage.setItem("role", "admin");
         }
 
+        alert("Login Successful 🎉");
+
         this.$router.push("/");
       } else {
-        alert("Invalid email or password");
+        alert("Invalid email or password ❌");
       }
     }
   }
@@ -87,6 +96,11 @@ button {
   border-radius: 10px;
   color: white;
   cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #ff4500;
 }
 
 .switch {

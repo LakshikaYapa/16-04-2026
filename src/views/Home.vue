@@ -6,6 +6,7 @@
     <MealsSection />
     <CuisineSection />
     <Dietary />
+    <CommentSection />
   </div>
 </template>
 
@@ -16,4 +17,5 @@ import CuisineSection from "../components/CuisineSection.vue";
 import Dietary from "../components/Dietary.vue";
 import RecipeOfTheDay from "../components/RecipeOfTheDay.vue";
 import NavBar from "../components/NavBar.vue";
+import CommentSection from "../components/CommentSection.vue";
 </script>
