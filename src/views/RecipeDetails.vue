@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from "vue-router";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -8,7 +8,10 @@ const router = useRouter();
 const recipes = ref<any[]>([]);
 const loading = ref(true);
 
-onMounted(async () => {
+// 🔥 fetch function (REUSABLE)
+const fetchRecipes = async () => {
+  loading.value = true;
+
   const res = await fetch("https://dummyjson.com/recipes");
   const data = await res.json();
 
@@ -23,23 +26,36 @@ onMounted(async () => {
   });
 
   loading.value = false;
-});
+};
+
+// 🔥 first load
+onMounted(fetchRecipes);
+
+// 🔥 THIS IS THE IMPORTANT FIX
+watch(
+  () => route.params.type,
+  () => {
+    fetchRecipes();
+  }
+);
 </script>
 
 <template>
   <div class="bg-black text-white min-h-screen p-6">
 
+    <!-- TITLE -->
     <h1 class="text-3xl font-bold text-center mb-8 capitalize">
       {{ $route.params.type }} Recipes
     </h1>
 
+    <!-- LOADING -->
     <p v-if="loading" class="text-center text-gray-400">
       Loading recipes...
     </p>
 
+    <!-- RECIPES GRID -->
     <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-      <!-- 🔥 CLICK FIX HERE -->
       <div
         v-for="item in recipes"
         :key="item.id"
@@ -58,7 +74,11 @@ onMounted(async () => {
 
     </div>
 
-    <p v-if="!loading && recipes.length === 0" class="text-center mt-10 text-gray-400">
+    <!-- EMPTY -->
+    <p 
+      v-if="!loading && recipes.length === 0" 
+      class="text-center mt-10 text-gray-400"
+    >
       No recipes found 😢
     </p>
 

@@ -9,7 +9,6 @@
         <input v-model="email" type="email" placeholder="Email Address" required />
         <input v-model="password" type="password" placeholder="Password" required />
 
-        <!-- 🌍 Country -->
         <select v-model="country" required>
           <option disabled value="">Select your country</option>
           <option>Sri Lanka</option>
@@ -17,6 +16,7 @@
           <option>USA</option>
           <option>UK</option>
           <option>Australia</option>
+          <option>Other</option>
         </select>
 
         <button type="submit">Register</button>
@@ -41,7 +41,6 @@ export default {
     };
   },
   mounted() {
-    // 🌍 Auto detect country (optional)
     fetch("https://ipapi.co/json/")
       .then(res => res.json())
       .then(data => {
@@ -50,6 +49,14 @@ export default {
   },
   methods: {
     registerUser() {
+      let users = JSON.parse(localStorage.getItem("users")) || [];
+
+      const exists = users.find(u => u.email === this.email);
+      if (exists) {
+        alert("Email already exists ❌");
+        return;
+      }
+
       const user = {
         name: this.name,
         email: this.email,
@@ -57,7 +64,8 @@ export default {
         country: this.country
       };
 
-      localStorage.setItem("user", JSON.stringify(user));
+      users.push(user);
+      localStorage.setItem("users", JSON.stringify(users));
 
       alert("Registered Successfully 🎉");
       this.$router.push("/login");

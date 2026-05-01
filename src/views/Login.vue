@@ -29,24 +29,22 @@ export default {
   },
   methods: {
     loginUser() {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const users = JSON.parse(localStorage.getItem("users")) || [];
 
-      if (user && user.email === this.email && user.password === this.password) {
+      const user = users.find(
+        u => u.email === this.email && u.password === this.password
+      );
 
-        // ✅ login status
+      if (user) {
         localStorage.setItem("isAuth", "true");
-
-        // 🔥 IMPORTANT (this fixes your name issue)
         localStorage.setItem("userName", user.name);
         localStorage.setItem("userCountry", user.country);
 
-        // optional admin role
         if (this.email === "admin@gmail.com") {
           localStorage.setItem("role", "admin");
         }
 
         alert("Login Successful 🎉");
-
         this.$router.push("/");
       } else {
         alert("Invalid email or password ❌");
