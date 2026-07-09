@@ -1,24 +1,53 @@
 import { createRouter, createWebHistory } from 'vue-router';
-
+import ShoppingList from "../views/ShoppingList.vue";
 import Home from '../views/Home.vue';
 import RecipeDetails from '../views/RecipeDetails.vue';
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import RecipeFullDetails from "../views/RecipeFullDetails.vue";
 
-const routes = [
-  { path: '/', component: Home },
+// NEW IMPORT
+import MyRecipes from "../views/MyRecipes.vue";
 
-  // 🔒 Protect this route
-  { 
-    path: '/recipes/:type', 
-    component: RecipeDetails,
-    meta: { requiresAuth: true }
+const routes = [
+  {
+    path: '/',
+    component: Home
   },
 
-  { path: '/login', component: Login },
-  { path: '/register', component: Register },
-  { path: "/recipe/:id", component: RecipeFullDetails },
+  {
+    path: '/recipes/:type',
+    component: RecipeDetails,
+    meta: {
+      requiresAuth: true
+    }
+  },
+
+  {
+  path: "/shopping-list",
+  component: ShoppingList
+  },
+  
+  {
+    path: '/login',
+    component: Login
+  },
+
+  {
+    path: '/register',
+    component: Register
+  },
+
+  {
+    path: "/recipe/:id",
+    component: RecipeFullDetails
+  },
+
+  // NEW PAGE
+  {
+    path: "/my-recipes",
+    component: MyRecipes
+  }
 ];
 
 const router = createRouter({
@@ -26,17 +55,23 @@ const router = createRouter({
   routes,
 });
 
-// 🔐 Route Guard
+// AUTH GUARD
 router.beforeEach((to, from, next) => {
+
   const isAuth = localStorage.getItem("isAuth");
 
-  // If route needs auth
   if (to.meta.requiresAuth && !isAuth) {
-    alert("you want to login first ");
+
+    alert("You want to login first");
+
     next('/login');
+
   } else {
+
     next();
+
   }
+
 });
 
 export default router;

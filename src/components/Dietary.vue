@@ -4,54 +4,58 @@ import { useRouter } from "vue-router";
 import veg from '../assets/meals/dietary/veg.png'
 import nonveg from '../assets/meals/dietary/non veg.png'
 
-// 🔥 router
 const router = useRouter();
 
-// 🔥 navigate function
 const goToDetails = (type: string) => {
   router.push(`/recipes/${type}`);
 };
 </script>
 
 <template>
-  <section class="bg-black text-white py-8 px-6">
+  <section class="bg-black text-white py-16 px-6">
 
-    <!-- TITLE -->
-    <h2 class="text-center text-4xl font-bold mb-3 font-serif">
-      Dietary Types
-    </h2>
+    <div class="max-w-6xl mx-auto">
 
-    <!-- DESCRIPTION -->
-    <p class="text-center text-gray-400 max-w-3xl mx-auto mb-8">
-      Discover meals that suit your lifestyle and preferences. Whether you prefer
-      plant-based dishes or rich, protein-packed options, explore a variety of
-      dietary choices crafted to match your taste and health goals.
-    </p>
+      <h2 class="text-4xl font-bold text-center mb-4">
+        Dietary Types
+      </h2>
 
-    <!-- IMAGES -->
-    <div class="flex justify-center gap-16 flex-wrap">
+      <p class="text-center text-gray-400 mb-10">
+        Choose meals that match your lifestyle.
+      </p>
 
-      <!-- Vegetarian -->
-      <div class="text-center cursor-pointer" @click="goToDetails('vegetarian')">
-        <img 
-          :src="veg"
-          class="w-64 h-64 object-cover rounded-full mx-auto 
-                 hover:scale-105 transition duration-300"
-        />
-        <p class="mt-3 text-lg">Vegetarian</p>
-      </div>
+      <!-- 🔥 CENTER FIX HERE -->
+      <div class="flex justify-center gap-12 flex-wrap">
 
-      <!-- Non-Vegetarian -->
-      <div class="text-center cursor-pointer" @click="goToDetails('meat')">
-        <img 
-          :src="nonveg"
-          class="w-64 h-64 object-cover rounded-full mx-auto 
-                 hover:scale-105 transition duration-300"
-        />
-        <p class="mt-3 text-lg">Non Vegetarian</p>
+        <div @click="goToDetails('vegetarian')" class="cursor-pointer group text-center">
+          <img :src="veg" class="img-style"/>
+          <p class="label">Vegetarian</p>
+        </div>
+
+        <div @click="goToDetails('meat')" class="cursor-pointer group text-center">
+          <img :src="nonveg" class="img-style"/>
+          <p class="label">Non Vegetarian</p>
+        </div>
+
       </div>
 
     </div>
-
   </section>
 </template>
+
+<style scoped>
+.img-style {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 9999px;
+  transition: 0.3s;
+}
+.img-style:hover {
+  transform: scale(1.08);
+}
+.label {
+  margin-top: 10px;
+  font-size: 16px;
+}
+</style>

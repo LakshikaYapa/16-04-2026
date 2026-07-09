@@ -11,52 +11,65 @@ const cuisines = [
 ];
 
 const goToDetails = (type: string) => {
-  const isAuth = localStorage.getItem("isAuth");
-
-  if (!isAuth) {
-    const goLogin = confirm(
-      "You need to login first 🔐\n\nPress OK to Login or Cancel to go Home."
-    );
-
-    if (goLogin) {
-      router.push("/login");
-    } else {
-      router.push("/");
-    }
-  } else {
-    router.push(`/recipes/${type.toLowerCase()}`);
-  }
+  router.push(`/recipes/${type.toLowerCase()}`);
 };
 </script>
 
 <template>
-  <section class="bg-black text-white py-0 px-6">
+  <section class="bg-black text-white py-16 px-6">
 
-    <h2 class="text-center text-5xl font-bold mb-6 font-serif">
-      By Cuisine
-    </h2>
+    <div class="max-w-6xl mx-auto">
 
-    <p class="text-center text-gray-400 text-lg max-w-2xl mx-auto mb-10">
-      Explore cuisines from around the world.
-    </p>
+      <!-- TITLE -->
+      <h2 class="text-4xl font-bold text-center mb-4">
+        Cuisine Types
+      </h2>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 items-center">
+      <!-- DESCRIPTION -->
+      <p class="text-center text-gray-400 mb-10">
+        Explore cuisines from around the world.
+      </p>
 
-      <div
-        v-for="cuisine in cuisines"
-        :key="cuisine.name"
-        class="text-center group cursor-pointer"
-        @click="goToDetails(cuisine.name)"
-      >
-        <img
-          :src="cuisine.image"
-          class="mx-auto h-72 object-contain group-hover:scale-110 transition duration-300"
-        />
+      <!-- GRID -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
 
-        <p class="mt-4 text-lg">{{ cuisine.name }}</p>
+        <div
+          v-for="cuisine in cuisines"
+          :key="cuisine.name"
+          @click="goToDetails(cuisine.name)"
+          class="cursor-pointer group"
+        >
+          <!-- 🔥 UPDATED IMAGE -->
+          <img :src="cuisine.image" class="img-style"/>
+
+          <!-- LABEL -->
+          <p class="label">{{ cuisine.name }}</p>
+        </div>
+
       </div>
 
     </div>
-
   </section>
 </template>
+
+<style scoped>
+.img-style {
+  width: 100%;
+  height: 200px; /* 🔥 increased from 160px */
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+/* 🔥 hover effect */
+.img-style:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.6));
+}
+
+/* label */
+.label {
+  margin-top: 12px;
+  font-size: 17px;
+  font-weight: 500;
+}
+</style>

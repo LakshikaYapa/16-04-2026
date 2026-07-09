@@ -12,15 +12,9 @@ const goToDetails = (type: string) => {
   const isAuth = localStorage.getItem("isAuth");
 
   if (!isAuth) {
-    const goLogin = confirm(
-      "You need to login first 🔐\n\nPress OK to Login or Cancel to go Home."
-    );
-
-    if (goLogin) {
-      router.push("/login");
-    } else {
-      router.push("/");
-    }
+    const goLogin = confirm("Login required 🔐");
+    if (goLogin) router.push("/login");
+    else router.push("/");
   } else {
     router.push(`/recipes/${type}`);
   }
@@ -28,39 +22,59 @@ const goToDetails = (type: string) => {
 </script>
 
 <template>
-  <div class="bg-black min-h-screen text-white mb-0">
+  <section class="bg-black text-white py-16 px-6">
 
-    <h1 class="text-3xl font-bold text-center mb-20">
-      By Meal Type
-    </h1>
+    <div class="max-w-6xl mx-auto">
 
-    <p class="text-center text-gray-400 text-lg max-w-2xl mx-auto mb-10">
-      Explore a variety of meals for every time of the day.
-    </p>
+      <h2 class="text-4xl font-bold text-center mb-4">
+        Meal Types
+      </h2>
 
-    <div class="flex justify-center gap-16 flex-wrap">
+      <p class="text-center text-gray-400 mb-10">
+        Explore meals for every time of the day.
+      </p>
 
-      <div class="text-center" @click="goToDetails('breakfast')">
-        <img :src="breakfast" class="w-full h-55 object-cover rounded-full mx-auto hover:scale-105 transition cursor-pointer"/>
-        <p class="mt-3 text-lg">Breakfast</p>
-      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
 
-      <div class="text-center" @click="goToDetails('lunch')">
-        <img :src="lunch" class="w-full h-60 object-cover rounded-full mx-auto hover:scale-105 transition cursor-pointer"/>
-        <p class="mt-3 text-lg">Lunch</p>
-      </div>
+        <div @click="goToDetails('breakfast')" class="cursor-pointer group">
+          <img :src="breakfast" class="img-style"/>
+          <p class="label">Breakfast</p>
+        </div>
 
-      <div class="text-center" @click="goToDetails('dinner')">
-        <img :src="dinner" class="w-full h-60 object-cover rounded-full mx-auto hover:scale-105 transition cursor-pointer"/>
-        <p class="mt-3 text-lg">Dinner</p>
-      </div>
+        <div @click="goToDetails('lunch')" class="cursor-pointer group">
+          <img :src="lunch" class="img-style"/>
+          <p class="label">Lunch</p>
+        </div>
 
-      <div class="text-center" @click="goToDetails('dessert')">
-        <img :src="dessert" class="w-full h-60 object-cover rounded-full mx-auto hover:scale-105 transition cursor-pointer"/>
-        <p class="mt-3 text-lg">Dessert</p>
+        <div @click="goToDetails('dinner')" class="cursor-pointer group">
+          <img :src="dinner" class="img-style"/>
+          <p class="label">Dinner</p>
+        </div>
+
+        <div @click="goToDetails('dessert')" class="cursor-pointer group">
+          <img :src="dessert" class="img-style"/>
+          <p class="label">Dessert</p>
+        </div>
+
       </div>
 
     </div>
-
-  </div>
+  </section>
 </template>
+
+<style scoped>
+.img-style {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 9999px;
+  transition: 0.3s;
+}
+.img-style:hover {
+  transform: scale(1.08);
+}
+.label {
+  margin-top: 10px;
+  font-size: 16px;
+}
+</style>

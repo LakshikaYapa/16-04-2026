@@ -8,18 +8,35 @@ export default {
     return {
       isAuth: false,
       role: "",
-      showMenu: false
+      showMenu: false,
+      shoppingCount: 0,
     };
   },
 
   mounted() {
     this.checkAuth();
+    this.loadShoppingCount();
+
+    // Update count when page gains focus
+    window.addEventListener("focus", this.loadShoppingCount);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("focus", this.loadShoppingCount);
   },
 
   methods: {
     checkAuth() {
       this.isAuth = localStorage.getItem("isAuth") === "true";
       this.role = localStorage.getItem("role") || "";
+    },
+
+    loadShoppingCount() {
+      const list = JSON.parse(
+        localStorage.getItem("shoppingList") || "[]"
+      );
+
+      this.shoppingCount = list.length;
     },
 
     logout() {
@@ -36,47 +53,74 @@ export default {
 </script>
 
 <template>
-  <nav class="flex justify-between items-center px-8 py-4 bg-black text-white shadow-lg">
-
+  <nav
+    class="flex justify-between items-center px-8 py-4 bg-black text-white shadow-lg"
+  >
     <!-- Logo -->
-    <div class="flex items-center gap-2 cursor-pointer" @click="$router.push('/')">
-      <img src="/logo/logo1.jpeg" class="h-16 hover:scale-105 transition" />
+    <div
+      class="flex items-center gap-2 cursor-pointer"
+      @click="$router.push('/')"
+    >
+      <img
+        src="/logo/logo1.jpeg"
+        class="h-16 hover:scale-105 transition"
+      />
     </div>
 
     <!-- Menu -->
     <ul class="flex gap-8 text-lg font-medium items-center">
 
-      <li @click="$router.push('/')" class="nav-item">
+      <li
+        @click="$router.push('/')"
+        class="nav-item"
+      >
         Home
       </li>
 
-      <!-- 🔥 Categories -->
-      <li @click="showMenu = true" class="nav-item">
+      <li
+        @click="showMenu = true"
+        class="nav-item"
+      >
         Categories
       </li>
 
-      <!-- NOT LOGGED -->
-      <li 
+      <!-- Shopping List -->
+      <li
+        @click="$router.push('/shopping-list')"
+        class="nav-item text-yellow-400"
+      >
+        🛒 Shopping List
+
+        <span
+          v-if="shoppingCount > 0"
+          class="ml-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full"
+        >
+          {{ shoppingCount }}
+        </span>
+      </li>
+
+      <!-- Login -->
+      <li
         v-if="!isAuth"
-        @click="$router.push('/login')" 
+        @click="$router.push('/login')"
         class="nav-item"
       >
         Login
       </li>
 
-      <!-- LOGGED -->
-      <li 
+      <!-- Logout -->
+      <li
         v-if="isAuth"
-        @click="logout" 
+        @click="logout"
         class="nav-item text-red-400 hover:text-red-500"
       >
         Logout
       </li>
 
-      <!-- ADMIN -->
-      <li 
+      <!-- Admin -->
+      <li
         v-if="isAuth && role === 'admin'"
-        @click="$router.push('/admin')" 
+        @click="$router.push('/admin')"
         class="nav-item text-green-400 hover:text-green-500"
       >
         Admin
@@ -85,17 +129,18 @@ export default {
     </ul>
   </nav>
 
-  <!-- 🔥 SIDE MENU -->
-  <div v-if="showMenu" class="fixed inset-0 z-50 flex">
+  <!-- Side Menu -->
+  <div
+    v-if="showMenu"
+    class="fixed inset-0 z-50 flex"
+  >
 
-    <!-- overlay -->
-    <div 
+    <div
       class="bg-black/60 w-full backdrop-blur-sm"
       @click="showMenu = false"
     ></div>
 
-    <!-- sidebar with animation -->
-    <SideMenu 
+    <SideMenu
       @close="showMenu = false"
       class="animate-slide"
     />
@@ -104,7 +149,6 @@ export default {
 </template>
 
 <style scoped>
-/* 🔥 NAV ITEM STYLE */
 .nav-item {
   cursor: pointer;
   position: relative;
@@ -115,7 +159,6 @@ export default {
   color: #facc15;
 }
 
-/* underline animation */
 .nav-item::after {
   content: "";
   position: absolute;
@@ -131,11 +174,11 @@ export default {
   width: 100%;
 }
 
-/* 🔥 SIDEBAR SLIDE */
 @keyframes slideIn {
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }
