@@ -9,37 +9,62 @@ export default {
       isAuth: false,
       role: "",
       showMenu: false,
+
       shoppingCount: 0,
+      favoriteCount: 0,
     };
   },
 
   mounted() {
     this.checkAuth();
-    this.loadShoppingCount();
 
-    // Update count when page gains focus
+    this.loadShoppingCount();
+    this.loadFavoriteCount();
+
     window.addEventListener("focus", this.loadShoppingCount);
+    window.addEventListener("focus", this.loadFavoriteCount);
+
+    window.addEventListener("storage", this.loadShoppingCount);
+    window.addEventListener("storage", this.loadFavoriteCount);
   },
 
   beforeUnmount() {
     window.removeEventListener("focus", this.loadShoppingCount);
+    window.removeEventListener("focus", this.loadFavoriteCount);
+
+    window.removeEventListener("storage", this.loadShoppingCount);
+    window.removeEventListener("storage", this.loadFavoriteCount);
   },
 
   methods: {
+
     checkAuth() {
       this.isAuth = localStorage.getItem("isAuth") === "true";
       this.role = localStorage.getItem("role") || "";
     },
 
     loadShoppingCount() {
+
       const list = JSON.parse(
         localStorage.getItem("shoppingList") || "[]"
       );
 
       this.shoppingCount = list.length;
+
+    },
+
+    loadFavoriteCount() {
+
+      const list = JSON.parse(
+        localStorage.getItem("favorites") || "[]"
+      );
+
+      this.favoriteCount = list.length;
+
     },
 
     logout() {
+
       localStorage.removeItem("isAuth");
       localStorage.removeItem("role");
 
@@ -47,7 +72,9 @@ export default {
       this.role = "";
 
       this.$router.push("/");
+
     }
+
   }
 };
 </script>
@@ -56,6 +83,7 @@ export default {
   <nav
     class="flex justify-between items-center px-8 py-4 bg-black text-white shadow-lg"
   >
+
     <!-- Logo -->
     <div
       class="flex items-center gap-2 cursor-pointer"
@@ -70,6 +98,7 @@ export default {
     <!-- Menu -->
     <ul class="flex gap-8 text-lg font-medium items-center">
 
+      <!-- Home -->
       <li
         @click="$router.push('/')"
         class="nav-item"
@@ -77,6 +106,7 @@ export default {
         Home
       </li>
 
+      <!-- Categories -->
       <li
         @click="showMenu = true"
         class="nav-item"
@@ -84,7 +114,7 @@ export default {
         Categories
       </li>
 
-      <!-- Shopping List -->
+      <!-- Shopping -->
       <li
         @click="$router.push('/shopping-list')"
         class="nav-item text-yellow-400"
@@ -97,6 +127,23 @@ export default {
         >
           {{ shoppingCount }}
         </span>
+
+      </li>
+
+      <!-- Favorites -->
+      <li
+        @click="$router.push('/favorites')"
+        class="nav-item text-pink-400"
+      >
+        ❤️ Favorites
+
+        <span
+          v-if="favoriteCount > 0"
+          class="ml-1 bg-pink-600 text-white text-xs px-2 py-1 rounded-full"
+        >
+          {{ favoriteCount }}
+        </span>
+
       </li>
 
       <!-- Login -->
@@ -127,6 +174,7 @@ export default {
       </li>
 
     </ul>
+
   </nav>
 
   <!-- Side Menu -->

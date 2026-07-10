@@ -8,6 +8,7 @@ import RecipeFullDetails from "../views/RecipeFullDetails.vue";
 
 // NEW IMPORT
 import MyRecipes from "../views/MyRecipes.vue";
+import Favorites from "../views/Favorites.vue";
 
 const routes = [
   {
@@ -47,7 +48,12 @@ const routes = [
   {
     path: "/my-recipes",
     component: MyRecipes
-  }
+  },
+
+   {
+  path: "/favorites",
+  component: Favorites
+}
 ];
 
 const router = createRouter({
