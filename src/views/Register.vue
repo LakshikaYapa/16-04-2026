@@ -19,6 +19,7 @@
           <option>Other</option>
         </select>
 
+        <p v-if="error" class="form-error">{{ error }}</p>
         <button type="submit">Register</button>
       </form>
 
@@ -30,53 +31,38 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      name: "",
-      email: "",
-      password: "",
-      country: ""
-    };
-  },
-  mounted() {
-    fetch("https://ipapi.co/json/")
-      .then(res => res.json())
-      .then(data => {
-        this.country = data.country_name;
-      });
-  },
-  methods: {
-    registerUser() {
-      let users = JSON.parse(localStorage.getItem("users")) || [];
+<script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import type { RegisteredUser } from "../types";
 
-      const exists = users.find(u => u.email === this.email);
-      if (exists) {
-        alert("Email already exists ❌");
-        return;
-      }
+const router = useRouter();
+const name = ref("");
+const email = ref("");
+const password = ref("");
+const country = ref("");
+const error = ref("");
 
-      const user = {
-        name: this.name,
-        email: this.email,
-        password: this.password,
-        country: this.country
-      };
-
-      users.push(user);
-      localStorage.setItem("users", JSON.stringify(users));
-
-      alert("Registered Successfully 🎉");
-      this.$router.push("/login");
-    }
+const registerUser = (): void => {
+  const users = JSON.parse(localStorage.getItem("users") || "[]") as RegisteredUser[];
+  if (users.some((user) => user.email.toLowerCase() === email.value.toLowerCase())) {
+    error.value = "An account already exists with this email.";
+    return;
   }
+  if (password.value.length < 6) {
+    error.value = "Password must contain at least 6 characters.";
+    return;
+  }
+  users.push({ name: name.value.trim(), email: email.value.trim(), password: password.value, country: country.value });
+  localStorage.setItem("users", JSON.stringify(users));
+  router.push("/login");
 };
 </script>
 
 <style scoped>
 .auth-page {
-  height: 100vh;
+  min-height: 100svh;
+  padding: 20px;
   background: linear-gradient(135deg, #1e1e2f, #ff7e5f);
   display: flex;
   justify-content: center;
@@ -88,7 +74,7 @@ export default {
   backdrop-filter: blur(12px);
   padding: 35px;
   border-radius: 20px;
-  width: 340px;
+  width: min(100%, 340px);
   text-align: center;
   color: white;
   box-shadow: 0 8px 30px rgba(0,0,0,0.3);
@@ -133,4 +119,5 @@ button:hover {
   margin-top: 15px;
   font-size: 14px;
 }
+.form-error { margin: 8px 0; color: #fecaca; font-size: 13px; }
 </style>

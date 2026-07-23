@@ -1,8 +1,15 @@
 import { ref } from "vue";
+import type { Recipe } from "../types";
 
-const favorites = ref<any[]>(
-  JSON.parse(localStorage.getItem("favorites") || "[]")
-);
+const readFavorites = (): Recipe[] => {
+  try {
+    return JSON.parse(localStorage.getItem("favorites") || "[]") as Recipe[];
+  } catch {
+    return [];
+  }
+};
+
+const favorites = ref<Recipe[]>(readFavorites());
 
 // Save to localStorage
 const saveFavorites = () => {
@@ -13,7 +20,7 @@ const saveFavorites = () => {
 };
 
 // Add or Remove Favorite
-const toggleFavorite = (recipe: any) => {
+const toggleFavorite = (recipe: Recipe): void => {
 
   const index = favorites.value.findIndex(
     (item) => item.id === recipe.id
@@ -33,7 +40,7 @@ const toggleFavorite = (recipe: any) => {
 };
 
 // Check Favorite
-const isFavorite = (id: number) => {
+const isFavorite = (id: number): boolean => {
 
   return favorites.value.some(
     (item) => item.id === id
@@ -42,7 +49,7 @@ const isFavorite = (id: number) => {
 };
 
 // Remove
-const removeFavorite = (id: number) => {
+const removeFavorite = (id: number): void => {
 
   favorites.value = favorites.value.filter(
     (item) => item.id !== id

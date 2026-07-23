@@ -2,10 +2,12 @@
 import { useRoute } from "vue-router";
 import { ref, onMounted, computed } from "vue";
 import { useFavorites } from "../composables/useFavorites";
+import type { Recipe, ShoppingItem } from "../types";
 
 const route = useRoute();
 
-const recipe = ref<any>(null);
+const recipe = ref<Recipe | null>(null);
+const error = ref("");
 
 const {
   toggleFavorite,
@@ -14,13 +16,13 @@ const {
 
 // Fetch recipe
 onMounted(async () => {
-
-  const res = await fetch(
-    `https://dummyjson.com/recipes/${route.params.id}`
-  );
-
-  recipe.value = await res.json();
-
+  try {
+    const res = await fetch(`https://dummyjson.com/recipes/${route.params.id}`);
+    if (!res.ok) throw new Error("Could not load this recipe.");
+    recipe.value = (await res.json()) as Recipe;
+  } catch (caughtError) {
+    error.value = caughtError instanceof Error ? caughtError.message : "Something went wrong.";
+  }
 });
 
 // Add ingredients to shopping list
@@ -30,12 +32,12 @@ const addToShoppingList = () => {
 
   const shoppingList = JSON.parse(
     localStorage.getItem("shoppingList") || "[]"
-  );
+  ) as ShoppingItem[];
 
   recipe.value.ingredients.forEach((ingredient: string) => {
 
     const exists = shoppingList.find(
-      (item: any) =>
+      (item) =>
         item.name.toLowerCase() === ingredient.toLowerCase()
     );
 
@@ -78,7 +80,7 @@ const handleFavorite = () => {
 };
 </script>
 <template>
-  <div class="bg-black text-white min-h-screen p-6 flex justify-center">
+  <div class="flex min-h-screen justify-center bg-black px-5 py-8 text-white sm:px-8">
 
     <div
       v-if="recipe"
@@ -90,7 +92,8 @@ const handleFavorite = () => {
 
         <img
           :src="recipe.image"
-          class="w-full h-80 object-cover rounded-xl shadow-lg mb-6"
+          :alt="recipe.name"
+          class="mb-6 h-56 w-full rounded-xl object-cover shadow-lg sm:h-80"
         />
 
         <div class="flex justify-end mb-4">
@@ -107,13 +110,13 @@ const handleFavorite = () => {
       </div>
 
       <!-- TITLE -->
-      <h1 class="text-4xl font-bold text-center mb-4">
+      <h1 class="mb-4 text-center text-3xl font-bold sm:text-4xl">
         {{ recipe.name }}
       </h1>
 
       <!-- TIME -->
       <div
-        class="flex justify-center gap-6 text-gray-400 mb-6"
+        class="mb-6 flex flex-col items-center justify-center gap-2 text-sm text-gray-400 sm:flex-row sm:gap-6 sm:text-base"
       >
         <span>⏱ Prep: {{ recipe.prepTimeMinutes }} min</span>
 
@@ -121,7 +124,7 @@ const handleFavorite = () => {
       </div>
 
       <!-- GRID -->
-      <div class="grid md:grid-cols-2 gap-6">
+      <div class="grid gap-6 md:grid-cols-2">
 
         <!-- Ingredients -->
         <div
@@ -176,7 +179,7 @@ const handleFavorite = () => {
               <span
                 class="text-yellow-400 font-bold mr-2"
               >
-                {{ index + 1 }}.
+                {{ Number(index) + 1 }}.
               </span>
 
               {{ step }}
@@ -204,11 +207,12 @@ const handleFavorite = () => {
     </div>
 
     <p
-      v-else
+      v-else-if="!error"
       class="text-gray-400"
     >
       Loading...
     </p>
+    <p v-else class="text-red-400">{{ error }}</p>
 
   </div>
 </template>
