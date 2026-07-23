@@ -1,10 +1,26 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from "vue";
 import { useRouter } from "vue-router";
-import type { Recipe, ShoppingItem } from "../types";
+import type {
+  Recipe,
+  ShoppingItem,
+} from "../types";
+import {
+  FAVORITES_UPDATED_EVENT,
+} from "../composables/useFavorites";
 import SideMenu from "./SideMenu.vue";
 
 const router = useRouter();
+
+/*
+  Custom event used when the shopping list changes.
+*/
+const SHOPPING_LIST_UPDATED_EVENT =
+  "kitchen-magic-shopping-list-updated";
 
 const isAuth = ref(false);
 const showMenu = ref(false);
@@ -14,11 +30,18 @@ const favoriteCount = ref(0);
 
 /*
   Safely reads an array from localStorage.
-  If stored data is invalid, it returns an empty array.
 */
-const readStoredArray = <T,>(key: string): T[] => {
+const readStoredArray = <T,>(
+  key: string
+): T[] => {
   try {
-    return JSON.parse(localStorage.getItem(key) ?? "[]") as T[];
+    const storedData = localStorage.getItem(key);
+
+    if (!storedData) {
+      return [];
+    }
+
+    return JSON.parse(storedData) as T[];
   } catch {
     return [];
   }
@@ -28,7 +51,8 @@ const readStoredArray = <T,>(key: string): T[] => {
   Checks whether the user is logged in.
 */
 const checkAuth = (): void => {
-  isAuth.value = localStorage.getItem("isAuth") === "true";
+  isAuth.value =
+    localStorage.getItem("isAuth") === "true";
 };
 
 /*
@@ -64,7 +88,8 @@ const openCategories = (): void => {
 };
 
 /*
-  Logs out the current user.
+  Logs out the current user and removes saved
+  authentication information.
 */
 const logout = async (): Promise<void> => {
   const authenticationKeys = [
@@ -85,17 +110,58 @@ const logout = async (): Promise<void> => {
   await router.push("/");
 };
 
+/*
+  Loads the initial state and registers event listeners.
+*/
 onMounted(() => {
   checkAuth();
   loadCounts();
 
-  window.addEventListener("focus", loadCounts);
-  window.addEventListener("storage", loadCounts);
+  window.addEventListener(
+    "focus",
+    loadCounts
+  );
+
+  window.addEventListener(
+    "storage",
+    loadCounts
+  );
+
+  window.addEventListener(
+    FAVORITES_UPDATED_EVENT,
+    loadCounts
+  );
+
+  window.addEventListener(
+    SHOPPING_LIST_UPDATED_EVENT,
+    loadCounts
+  );
 });
 
+/*
+  Removes all event listeners when the component
+  is destroyed.
+*/
 onBeforeUnmount(() => {
-  window.removeEventListener("focus", loadCounts);
-  window.removeEventListener("storage", loadCounts);
+  window.removeEventListener(
+    "focus",
+    loadCounts
+  );
+
+  window.removeEventListener(
+    "storage",
+    loadCounts
+  );
+
+  window.removeEventListener(
+    FAVORITES_UPDATED_EVENT,
+    loadCounts
+  );
+
+  window.removeEventListener(
+    SHOPPING_LIST_UPDATED_EVENT,
+    loadCounts
+  );
 });
 </script>
 
@@ -219,7 +285,9 @@ onBeforeUnmount(() => {
             ? 'Close navigation menu'
             : 'Open navigation menu'
         "
-        @click="showMobileMenu = !showMobileMenu"
+        @click="
+          showMobileMenu = !showMobileMenu
+        "
       >
         {{ showMobileMenu ? "✕" : "☰" }}
       </button>
@@ -261,7 +329,9 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="mobile-link text-yellow-300"
-        @click="closeMobileAndGo('/shopping-list')"
+        @click="
+          closeMobileAndGo('/shopping-list')
+        "
       >
         🛒 Shopping List
 
@@ -273,7 +343,9 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="mobile-link text-pink-300"
-        @click="closeMobileAndGo('/favorites')"
+        @click="
+          closeMobileAndGo('/favorites')
+        "
       >
         ❤️ Favorites
 

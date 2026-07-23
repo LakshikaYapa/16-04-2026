@@ -1,218 +1,365 @@
 <script setup lang="ts">
+import {
+  computed,
+  onMounted,
+  ref,
+} from "vue";
 import { useRoute } from "vue-router";
-import { ref, onMounted, computed } from "vue";
 import { useFavorites } from "../composables/useFavorites";
-import type { Recipe, ShoppingItem } from "../types";
+import type {
+  Recipe,
+  ShoppingItem,
+} from "../types";
 
 const route = useRoute();
 
+const SHOPPING_LIST_UPDATED_EVENT =
+  "kitchen-magic-shopping-list-updated";
+
 const recipe = ref<Recipe | null>(null);
+const loading = ref(true);
 const error = ref("");
 
 const {
   toggleFavorite,
-  isFavorite
+  isFavorite,
 } = useFavorites();
 
-// Fetch recipe
-onMounted(async () => {
+/*
+  Loads a single recipe from DummyJSON.
+*/
+const fetchRecipe = async (): Promise<void> => {
+  loading.value = true;
+  error.value = "";
+
   try {
-    const res = await fetch(`https://dummyjson.com/recipes/${route.params.id}`);
-    if (!res.ok) throw new Error("Could not load this recipe.");
-    recipe.value = (await res.json()) as Recipe;
-  } catch (caughtError) {
-    error.value = caughtError instanceof Error ? caughtError.message : "Something went wrong.";
-  }
-});
+    const recipeId = String(route.params.id);
 
-// Add ingredients to shopping list
-const addToShoppingList = () => {
-
-  if (!recipe.value) return;
-
-  const shoppingList = JSON.parse(
-    localStorage.getItem("shoppingList") || "[]"
-  ) as ShoppingItem[];
-
-  recipe.value.ingredients.forEach((ingredient: string) => {
-
-    const exists = shoppingList.find(
-      (item) =>
-        item.name.toLowerCase() === ingredient.toLowerCase()
+    const response = await fetch(
+      `https://dummyjson.com/recipes/${recipeId}`
     );
 
-    if (!exists) {
-
-      shoppingList.push({
-        name: ingredient,
-        checked: false,
-      });
-
+    if (!response.ok) {
+      throw new Error(
+        "Could not load this recipe."
+      );
     }
 
-  });
+    recipe.value =
+      (await response.json()) as Recipe;
+  } catch (caughtError) {
+    error.value =
+      caughtError instanceof Error
+        ? caughtError.message
+        : "Something went wrong.";
+  } finally {
+    loading.value = false;
+  }
+};
+
+/*
+  Safely loads the Shopping List from localStorage.
+*/
+const readShoppingList = (): ShoppingItem[] => {
+  try {
+    const storedList =
+      localStorage.getItem("shoppingList");
+
+    if (!storedList) {
+      return [];
+    }
+
+    return JSON.parse(
+      storedList
+    ) as ShoppingItem[];
+  } catch {
+    return [];
+  }
+};
+
+/*
+  Adds all ingredients of the selected recipe
+  to the Shopping List.
+
+  Duplicate ingredients are not added.
+*/
+const addToShoppingList = (): void => {
+  if (!recipe.value) {
+    return;
+  }
+
+  const shoppingList = readShoppingList();
+
+  recipe.value.ingredients.forEach(
+    (ingredient) => {
+      const ingredientAlreadyExists =
+        shoppingList.some(
+          (item) =>
+            item.name.toLowerCase() ===
+            ingredient.toLowerCase()
+        );
+
+      if (!ingredientAlreadyExists) {
+        shoppingList.push({
+          name: ingredient,
+          checked: false,
+        });
+      }
+    }
+  );
 
   localStorage.setItem(
     "shoppingList",
     JSON.stringify(shoppingList)
   );
 
-  alert("Ingredients added to Shopping List 🛒");
+  /*
+    Informs NavBar that the Shopping List changed.
+  */
+  window.dispatchEvent(
+    new Event(SHOPPING_LIST_UPDATED_EVENT)
+  );
 
+  alert(
+    "Ingredients added to Shopping List 🛒"
+  );
 };
 
-// Favorite state
-const favorite = computed(() => {
-
-  if (!recipe.value) return false;
+/*
+  Returns true when the current recipe
+  is already in Favorites.
+*/
+const favorite = computed<boolean>(() => {
+  if (!recipe.value) {
+    return false;
+  }
 
   return isFavorite(recipe.value.id);
-
 });
 
-// Toggle favorite
-const handleFavorite = () => {
-
-  if (!recipe.value) return;
+/*
+  Adds or removes the current recipe
+  from Favorites.
+*/
+const handleFavorite = (): void => {
+  if (!recipe.value) {
+    return;
+  }
 
   toggleFavorite(recipe.value);
-
 };
+
+onMounted(() => {
+  fetchRecipe();
+});
 </script>
+
 <template>
-  <div class="flex min-h-screen justify-center bg-black px-5 py-8 text-white sm:px-8">
-
+  <main
+    class="flex min-h-screen justify-center bg-black px-5 py-8 text-white sm:px-8"
+  >
+    <!-- Loading State -->
     <div
-      v-if="recipe"
-      class="max-w-4xl w-full"
+      v-if="loading"
+      class="flex min-h-[50vh] items-center justify-center"
     >
+      <p class="text-gray-400">
+        Loading recipe...
+      </p>
+    </div>
 
-      <!-- IMAGE + FAVORITE -->
+    <!-- Error State -->
+    <div
+      v-else-if="error"
+      class="flex min-h-[50vh] flex-col items-center justify-center gap-5 text-center"
+    >
+      <p class="text-red-400">
+        {{ error }}
+      </p>
+
+      <button
+        type="button"
+        class="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-black transition hover:bg-yellow-400"
+        @click="$router.back()"
+      >
+        ⬅ Go Back
+      </button>
+    </div>
+
+    <!-- Recipe Details -->
+    <article
+      v-else-if="recipe"
+      class="w-full max-w-4xl"
+    >
+      <!-- Recipe Image -->
       <div class="relative">
-
         <img
           :src="recipe.image"
           :alt="recipe.name"
-          class="mb-6 h-56 w-full rounded-xl object-cover shadow-lg sm:h-80"
+          class="mb-5 h-56 w-full rounded-xl object-cover shadow-lg sm:h-80"
         />
 
-        <div class="flex justify-end mb-4">
-
-  <button
-    @click="handleFavorite"
-    class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-full font-semibold transition duration-300 hover:scale-105"
-  >
-    {{ favorite ? "❤️ Remove from Favorites" : "🤍 Add to Favorites" }}
-  </button>
-
-</div>
-
+        <!-- Favorite Button -->
+        <div class="mb-4 flex justify-end">
+          <button
+            type="button"
+            class="rounded-full bg-red-500 px-5 py-2 font-semibold text-white transition duration-300 hover:scale-105 hover:bg-red-600"
+            :aria-label="
+              favorite
+                ? `Remove ${recipe.name} from Favorites`
+                : `Add ${recipe.name} to Favorites`
+            "
+            @click="handleFavorite"
+          >
+            {{
+              favorite
+                ? "❤️ Remove from Favorites"
+                : "🤍 Add to Favorites"
+            }}
+          </button>
+        </div>
       </div>
 
-      <!-- TITLE -->
-      <h1 class="mb-4 text-center text-3xl font-bold sm:text-4xl">
+      <!-- Recipe Name -->
+      <h1
+        class="mb-4 text-center text-3xl font-bold sm:text-4xl"
+      >
         {{ recipe.name }}
       </h1>
 
-      <!-- TIME -->
+      <!-- Recipe Information -->
       <div
-        class="mb-6 flex flex-col items-center justify-center gap-2 text-sm text-gray-400 sm:flex-row sm:gap-6 sm:text-base"
+        class="mb-7 grid grid-cols-2 gap-3 rounded-xl bg-gray-900 p-4 text-center text-sm text-gray-300 sm:grid-cols-4 sm:text-base"
       >
-        <span>⏱ Prep: {{ recipe.prepTimeMinutes }} min</span>
+        <div>
+          <span class="block text-lg">
+            ⏱
+          </span>
 
-        <span>🔥 Cook: {{ recipe.cookTimeMinutes }} min</span>
+          <span class="block text-gray-400">
+            Prep Time
+          </span>
+
+          <strong>
+            {{ recipe.prepTimeMinutes }} min
+          </strong>
+        </div>
+
+        <div>
+          <span class="block text-lg">
+            🔥
+          </span>
+
+          <span class="block text-gray-400">
+            Cook Time
+          </span>
+
+          <strong>
+            {{ recipe.cookTimeMinutes }} min
+          </strong>
+        </div>
+
+        <div>
+          <span class="block text-lg">
+            🍽
+          </span>
+
+          <span class="block text-gray-400">
+            Servings
+          </span>
+
+          <strong>
+            {{ recipe.servings }}
+          </strong>
+        </div>
+
+        <div>
+          <span class="block text-lg">
+            ⭐
+          </span>
+
+          <span class="block text-gray-400">
+            Rating
+          </span>
+
+          <strong>
+            {{ recipe.rating }}
+          </strong>
+        </div>
       </div>
 
-      <!-- GRID -->
+      <!-- Ingredients and Instructions -->
       <div class="grid gap-6 md:grid-cols-2">
-
         <!-- Ingredients -->
-        <div
-          class="bg-gray-900 rounded-xl shadow p-5"
+        <section
+          class="rounded-xl bg-gray-900 p-5 shadow"
         >
-
           <h2
-            class="text-2xl font-semibold text-yellow-400 mb-4"
+            class="mb-4 text-2xl font-semibold text-yellow-400"
           >
             🥗 Ingredients
           </h2>
 
           <ul class="space-y-2">
-
             <li
-              v-for="(item,index) in recipe.ingredients"
-              :key="index"
-              class="bg-gray-800 p-2 rounded"
+              v-for="ingredient in recipe.ingredients"
+              :key="ingredient"
+              class="rounded bg-gray-800 p-2"
             >
-              {{ item }}
+              {{ ingredient }}
             </li>
-
           </ul>
 
           <button
+            type="button"
+            class="mt-5 w-full rounded-lg bg-green-600 py-3 font-semibold transition hover:bg-green-700"
             @click="addToShoppingList"
-            class="mt-5 w-full bg-green-600 hover:bg-green-700 transition rounded-lg py-3 font-semibold"
           >
             🛒 Add Ingredients to Shopping List
           </button>
-
-        </div>
+        </section>
 
         <!-- Instructions -->
-        <div
-          class="bg-gray-900 rounded-xl shadow p-5"
+        <section
+          class="rounded-xl bg-gray-900 p-5 shadow"
         >
-
           <h2
-            class="text-2xl font-semibold text-green-400 mb-4"
+            class="mb-4 text-2xl font-semibold text-green-400"
           >
             🍳 Instructions
           </h2>
 
           <ol class="space-y-3">
-
             <li
-              v-for="(step,index) in recipe.instructions"
-              :key="index"
-              class="bg-gray-800 rounded p-3"
+              v-for="(
+                instruction,
+                index
+              ) in recipe.instructions"
+              :key="`${index}-${instruction}`"
+              class="rounded bg-gray-800 p-3"
             >
               <span
-                class="text-yellow-400 font-bold mr-2"
+                class="mr-2 font-bold text-yellow-400"
               >
-                {{ Number(index) + 1 }}.
+                {{ index + 1 }}.
               </span>
 
-              {{ step }}
-
+              {{ instruction }}
             </li>
-
           </ol>
-
-        </div>
-
+        </section>
       </div>
 
-      <!-- Back -->
-      <div class="text-center mt-8">
-
+      <!-- Back Button -->
+      <div class="mt-8 text-center">
         <button
+          type="button"
+          class="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-black transition hover:bg-yellow-400"
           @click="$router.back()"
-          class="bg-yellow-500 text-black px-6 py-2 rounded-lg hover:bg-yellow-400 transition"
         >
           ⬅ Back
         </button>
-
       </div>
-
-    </div>
-
-    <p
-      v-else-if="!error"
-      class="text-gray-400"
-    >
-      Loading...
-    </p>
-    <p v-else class="text-red-400">{{ error }}</p>
-
-  </div>
+    </article>
+  </main>
 </template>
