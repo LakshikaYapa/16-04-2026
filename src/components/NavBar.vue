@@ -1,82 +1,102 @@
-<script>
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import type { Recipe, ShoppingItem } from "../types";
 import SideMenu from "./SideMenu.vue";
 
-export default {
-  components: { SideMenu },
+const router = useRouter();
 
-  data() {
-    return {
-      isAuth: false,
-      role: "",
-      showMenu: false,
-      showMobileMenu: false,
-      shoppingCount: 0,
-      favoriteCount: 0,
-    };
-  },
+const isAuth = ref(false);
+const showMenu = ref(false);
+const showMobileMenu = ref(false);
+const shoppingCount = ref(0);
+const favoriteCount = ref(0);
 
-  mounted() {
-    this.checkAuth();
-    this.loadShoppingCount();
-    this.loadFavoriteCount();
-
-    window.addEventListener("focus", this.loadShoppingCount);
-    window.addEventListener("focus", this.loadFavoriteCount);
-    window.addEventListener("storage", this.loadShoppingCount);
-    window.addEventListener("storage", this.loadFavoriteCount);
-  },
-
-  beforeUnmount() {
-    window.removeEventListener("focus", this.loadShoppingCount);
-    window.removeEventListener("focus", this.loadFavoriteCount);
-    window.removeEventListener("storage", this.loadShoppingCount);
-    window.removeEventListener("storage", this.loadFavoriteCount);
-  },
-
-  methods: {
-    checkAuth() {
-      this.isAuth = localStorage.getItem("isAuth") === "true";
-      this.role = localStorage.getItem("role") || "";
-    },
-
-    loadShoppingCount() {
-      const list = JSON.parse(
-        localStorage.getItem("shoppingList") || "[]"
-      );
-
-      this.shoppingCount = list.length;
-    },
-
-    loadFavoriteCount() {
-      const list = JSON.parse(
-        localStorage.getItem("favorites") || "[]"
-      );
-
-      this.favoriteCount = list.length;
-    },
-
-    closeMobileAndGo(path) {
-      this.$router.push(path);
-      this.showMobileMenu = false;
-    },
-
-    openCategories() {
-      this.showMenu = true;
-      this.showMobileMenu = false;
-    },
-
-    logout() {
-      localStorage.removeItem("isAuth");
-      localStorage.removeItem("role");
-
-      this.isAuth = false;
-      this.role = "";
-      this.showMobileMenu = false;
-
-      this.$router.push("/");
-    },
-  },
+/*
+  Safely reads an array from localStorage.
+  If stored data is invalid, it returns an empty array.
+*/
+const readStoredArray = <T,>(key: string): T[] => {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "[]") as T[];
+  } catch {
+    return [];
+  }
 };
+
+/*
+  Checks whether the user is logged in.
+*/
+const checkAuth = (): void => {
+  isAuth.value = localStorage.getItem("isAuth") === "true";
+};
+
+/*
+  Loads Shopping List and Favorites counts.
+*/
+const loadCounts = (): void => {
+  const shoppingItems =
+    readStoredArray<ShoppingItem>("shoppingList");
+
+  const favoriteRecipes =
+    readStoredArray<Recipe>("favorites");
+
+  shoppingCount.value = shoppingItems.length;
+  favoriteCount.value = favoriteRecipes.length;
+};
+
+/*
+  Navigates to a page and closes the mobile menu.
+*/
+const closeMobileAndGo = async (
+  path: string
+): Promise<void> => {
+  showMobileMenu.value = false;
+  await router.push(path);
+};
+
+/*
+  Opens the category side menu.
+*/
+const openCategories = (): void => {
+  showMenu.value = true;
+  showMobileMenu.value = false;
+};
+
+/*
+  Logs out the current user.
+*/
+const logout = async (): Promise<void> => {
+  const authenticationKeys = [
+    "isAuth",
+    "role",
+    "accessToken",
+    "userName",
+    "userCountry",
+  ];
+
+  authenticationKeys.forEach((key) => {
+    localStorage.removeItem(key);
+  });
+
+  isAuth.value = false;
+  showMobileMenu.value = false;
+
+  await router.push("/");
+};
+
+onMounted(() => {
+  checkAuth();
+  loadCounts();
+
+  window.addEventListener("focus", loadCounts);
+  window.addEventListener("storage", loadCounts);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("focus", loadCounts);
+  window.removeEventListener("storage", loadCounts);
+});
 </script>
 
 <template>
@@ -87,91 +107,118 @@ export default {
       class="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
     >
       <!-- Logo -->
-      <div
+      <button
+        type="button"
         class="flex cursor-pointer items-center gap-2"
-        @click="$router.push('/')"
+        aria-label="Go to Kitchen Magic home page"
+        @click="router.push('/')"
       >
         <img
           src="/logo/logo1.jpeg"
-          alt="Kitchen Magic"
-         class="h-16 w-auto rounded-lg object-contain transition hover:scale-105 sm:h-20 lg:h-24"   
+          alt="Kitchen Magic logo"
+          class="h-16 w-auto rounded-lg object-contain transition hover:scale-105 sm:h-20 lg:h-24"
         />
-      </div>
+      </button>
 
-      <!-- Desktop Menu -->
+      <!-- Desktop Navigation -->
       <ul
         class="hidden items-center gap-6 text-sm font-medium lg:flex xl:gap-8 xl:text-base"
       >
-        <li @click="$router.push('/')" class="nav-item">
-          Home
-        </li>
-
-        <li @click="showMenu = true" class="nav-item">
-          Categories
-        </li>
-
-        <li @click="$router.push('/about')" class="nav-item">
-          About
-        </li>
-
-        <li
-          @click="$router.push('/shopping-list')"
-          class="nav-item text-yellow-400"
-        >
-          🛒 Shopping List
-
-          <span
-            v-if="shoppingCount > 0"
-            class="ml-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
+        <li>
+          <button
+            type="button"
+            class="nav-item"
+            @click="router.push('/')"
           >
-            {{ shoppingCount }}
-          </span>
+            Home
+          </button>
         </li>
 
-        <li
-          @click="$router.push('/favorites')"
-          class="nav-item text-pink-400"
-        >
-          ❤️ Favorites
-
-          <span
-            v-if="favoriteCount > 0"
-            class="ml-1 rounded-full bg-pink-600 px-2 py-1 text-xs text-white"
+        <li>
+          <button
+            type="button"
+            class="nav-item"
+            @click="showMenu = true"
           >
-            {{ favoriteCount }}
-          </span>
+            Categories
+          </button>
         </li>
 
-        <li
-          v-if="!isAuth"
-          @click="$router.push('/login')"
-          class="nav-item"
-        >
-          Login
+        <li>
+          <button
+            type="button"
+            class="nav-item"
+            @click="router.push('/about')"
+          >
+            About
+          </button>
         </li>
 
-        <li
-          v-if="isAuth"
-          @click="logout"
-          class="nav-item text-red-400 hover:text-red-500"
-        >
-          Logout
+        <li>
+          <button
+            type="button"
+            class="nav-item text-yellow-400"
+            @click="router.push('/shopping-list')"
+          >
+            🛒 Shopping List
+
+            <span
+              v-if="shoppingCount > 0"
+              class="ml-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
+            >
+              {{ shoppingCount }}
+            </span>
+          </button>
         </li>
 
-        <li
-          v-if="isAuth && role === 'admin'"
-          @click="$router.push('/admin')"
-          class="nav-item text-green-400 hover:text-green-500"
-        >
-          Admin
+        <li>
+          <button
+            type="button"
+            class="nav-item text-pink-400"
+            @click="router.push('/favorites')"
+          >
+            ❤️ Favorites
+
+            <span
+              v-if="favoriteCount > 0"
+              class="ml-1 rounded-full bg-pink-600 px-2 py-1 text-xs text-white"
+            >
+              {{ favoriteCount }}
+            </span>
+          </button>
+        </li>
+
+        <li v-if="!isAuth">
+          <button
+            type="button"
+            class="nav-item"
+            @click="router.push('/login')"
+          >
+            Login
+          </button>
+        </li>
+
+        <li v-if="isAuth">
+          <button
+            type="button"
+            class="nav-item text-red-400 hover:text-red-500"
+            @click="logout"
+          >
+            Logout
+          </button>
         </li>
       </ul>
 
       <!-- Mobile Menu Button -->
       <button
+        type="button"
         class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-2xl transition hover:bg-white/10 lg:hidden"
         :aria-expanded="showMobileMenu"
-        aria-label="Open navigation menu"
+        :aria-label="
+          showMobileMenu
+            ? 'Close navigation menu'
+            : 'Open navigation menu'
+        "
         @click="showMobileMenu = !showMobileMenu"
       >
         {{ showMobileMenu ? "✕" : "☰" }}
@@ -184,8 +231,11 @@ export default {
     v-if="showMobileMenu"
     class="fixed inset-x-0 top-20 z-40 max-h-[calc(100svh-5rem)] overflow-y-auto border-b border-white/10 bg-gray-950 px-5 py-5 shadow-2xl lg:hidden"
   >
-    <div class="mx-auto flex max-w-7xl flex-col gap-2">
+    <div
+      class="mx-auto flex max-w-7xl flex-col gap-2"
+    >
       <button
+        type="button"
         class="mobile-link"
         @click="closeMobileAndGo('/')"
       >
@@ -193,6 +243,7 @@ export default {
       </button>
 
       <button
+        type="button"
         class="mobile-link"
         @click="openCategories"
       >
@@ -200,6 +251,7 @@ export default {
       </button>
 
       <button
+        type="button"
         class="mobile-link"
         @click="closeMobileAndGo('/about')"
       >
@@ -207,23 +259,32 @@ export default {
       </button>
 
       <button
+        type="button"
         class="mobile-link text-yellow-300"
         @click="closeMobileAndGo('/shopping-list')"
       >
         🛒 Shopping List
-        <span v-if="shoppingCount">({{ shoppingCount }})</span>
+
+        <span v-if="shoppingCount > 0">
+          ({{ shoppingCount }})
+        </span>
       </button>
 
       <button
+        type="button"
         class="mobile-link text-pink-300"
         @click="closeMobileAndGo('/favorites')"
       >
         ❤️ Favorites
-        <span v-if="favoriteCount">({{ favoriteCount }})</span>
+
+        <span v-if="favoriteCount > 0">
+          ({{ favoriteCount }})
+        </span>
       </button>
 
       <button
         v-if="!isAuth"
+        type="button"
         class="mobile-link"
         @click="closeMobileAndGo('/login')"
       >
@@ -231,7 +292,8 @@ export default {
       </button>
 
       <button
-        v-else
+        v-if="isAuth"
+        type="button"
         class="mobile-link text-red-300"
         @click="logout"
       >
@@ -246,14 +308,16 @@ export default {
     class="fixed inset-0 z-50 flex"
   >
     <SideMenu
-      @close="showMenu = false"
       class="animate-slide"
+      @close="showMenu = false"
     />
 
-    <div
+    <button
+      type="button"
       class="h-full flex-1 bg-black/60 backdrop-blur-sm"
+      aria-label="Close category menu"
       @click="showMenu = false"
-    ></div>
+    ></button>
   </div>
 </template>
 
@@ -261,6 +325,7 @@ export default {
 .nav-item {
   position: relative;
   cursor: pointer;
+  background: transparent;
   transition: color 0.3s ease;
 }
 
