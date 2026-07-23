@@ -1,80 +1,105 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 
-import breakfast from '../assets/meals/breakfast.webp'
-import lunch from '../assets/meals/lunch.webp'
-import dinner from '../assets/meals/dinner.png'
-import dessert from '../assets/meals/dessert1.webp'
+import breakfastImage from "../assets/meals/breakfast.webp";
+import lunchImage from "../assets/meals/lunch.webp";
+import dinnerImage from "../assets/meals/dinner.png";
+import dessertImage from "../assets/meals/Dessert1.webp";
+
+interface MealType {
+  name: string;
+  routeType: string;
+  image: string;
+  imageAlt: string;
+}
 
 const router = useRouter();
 
-const goToDetails = (type: string) => {
-  const isAuth = localStorage.getItem("isAuth");
+/*
+  Strictly typed meal category data.
+*/
+const mealTypes: MealType[] = [
+  {
+    name: "Breakfast",
+    routeType: "breakfast",
+    image: breakfastImage,
+    imageAlt: "Breakfast recipes",
+  },
+  {
+    name: "Lunch",
+    routeType: "lunch",
+    image: lunchImage,
+    imageAlt: "Lunch recipes",
+  },
+  {
+    name: "Dinner",
+    routeType: "dinner",
+    image: dinnerImage,
+    imageAlt: "Dinner recipes",
+  },
+  {
+    name: "Dessert",
+    routeType: "dessert",
+    image: dessertImage,
+    imageAlt: "Dessert recipes",
+  },
+];
 
-  if (!isAuth) {
-    const goLogin = confirm("Login required 🔐");
-    if (goLogin) router.push("/login");
-    else router.push("/");
-  } else {
-    router.push(`/recipes/${type}`);
-  }
+/*
+  Opens the selected meal category.
+
+  Login is not required because every visitor
+  should be able to browse recipes.
+*/
+const goToDetails = async (
+  type: string
+): Promise<void> => {
+  await router.push(`/recipes/${type}`);
 };
 </script>
 
 <template>
-  <section class="bg-black text-white py-16 px-6">
-
-    <div class="max-w-6xl mx-auto">
-
-      <h2 class="text-4xl font-bold text-center mb-4">
+  <section
+    class="bg-black px-6 py-16 text-white"
+  >
+    <div class="mx-auto max-w-6xl">
+      <h2
+        class="mb-4 text-center text-3xl font-bold sm:text-4xl"
+      >
         Meal Types
       </h2>
 
-      <p class="text-center text-gray-400 mb-10">
+      <p
+        class="mb-10 text-center text-gray-400"
+      >
         Explore meals for every time of the day.
       </p>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <div
+        class="grid grid-cols-2 gap-6 text-center md:grid-cols-4 md:gap-8"
+      >
+        <button
+          v-for="meal in mealTypes"
+          :key="meal.routeType"
+          type="button"
+          class="group flex flex-col items-center"
+          @click="
+            goToDetails(meal.routeType)
+          "
+        >
+          <img
+            :src="meal.image"
+            :alt="meal.imageAlt"
+            class="h-32 w-32 rounded-full object-cover transition duration-300 group-hover:scale-105 group-hover:shadow-[0_0_25px_rgba(249,115,22,0.35)] sm:h-40 sm:w-40 lg:h-48 lg:w-48"
+          />
 
-        <div @click="goToDetails('breakfast')" class="cursor-pointer group">
-          <img :src="breakfast" class="img-style"/>
-          <p class="label">Breakfast</p>
-        </div>
-
-        <div @click="goToDetails('lunch')" class="cursor-pointer group">
-          <img :src="lunch" class="img-style"/>
-          <p class="label">Lunch</p>
-        </div>
-
-        <div @click="goToDetails('dinner')" class="cursor-pointer group">
-          <img :src="dinner" class="img-style"/>
-          <p class="label">Dinner</p>
-        </div>
-
-        <div @click="goToDetails('dessert')" class="cursor-pointer group">
-          <img :src="dessert" class="img-style"/>
-          <p class="label">Dessert</p>
-        </div>
-
+          <span
+            class="mt-4 text-base font-medium transition group-hover:text-orange-400 sm:text-lg"
+          >
+            {{ meal.name }}
+          </span>
+        </button>
       </div>
-
     </div>
   </section>
 </template>
-
-<style scoped>
-.img-style {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 9999px;
-  transition: 0.3s;
-}
-.img-style:hover {
-  transform: scale(1.08);
-}
-.label {
-  margin-top: 10px;
-  font-size: 16px;
-}
-</style>

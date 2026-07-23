@@ -1,4 +1,10 @@
-import { createRouter, createWebHistory } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+} from "vue-router";
+import type {
+  RouteRecordRaw,
+} from "vue-router";
 
 import Home from "../views/Home.vue";
 import About from "../views/About.vue";
@@ -7,56 +13,94 @@ import RecipeDetails from "../views/RecipeDetails.vue";
 import RecipeFullDetails from "../views/RecipeFullDetails.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
-import MyRecipes from "../views/MyRecipes.vue";
 import Favorites from "../views/Favorites.vue";
 
-const routes = [
+/*
+  Strictly typed application routes.
+*/
+const routes: RouteRecordRaw[] = [
   {
     path: "/",
+    name: "home",
     component: Home,
   },
 
   {
     path: "/about",
+    name: "about",
     component: About,
   },
 
+  /*
+    Recipe categories can be viewed
+    without logging in.
+  */
   {
     path: "/recipes/:type",
+    name: "recipe-category",
     component: RecipeDetails,
+  },
+
+  /*
+    Full recipe details can also be viewed
+    without logging in.
+  */
+  {
+    path: "/recipe/:id",
+    name: "recipe-details",
+    component: RecipeFullDetails,
+  },
+
+  /*
+    Only logged-in users can view their
+    Shopping List.
+  */
+  {
+    path: "/shopping-list",
+    name: "shopping-list",
+    component: ShoppingList,
     meta: {
       requiresAuth: true,
     },
   },
 
-  {
-    path: "/recipe/:id",
-    component: RecipeFullDetails,
-  },
-
-  {
-    path: "/shopping-list",
-    component: ShoppingList,
-  },
-
+  /*
+    Only logged-in users can view their
+    favorite recipes.
+  */
   {
     path: "/favorites",
+    name: "favorites",
     component: Favorites,
+    meta: {
+      requiresAuth: true,
+    },
   },
 
-  {
-    path: "/my-recipes",
-    component: MyRecipes,
-  },
-
+  /*
+    Logged-in users do not need to reopen
+    the Login page.
+  */
   {
     path: "/login",
+    name: "login",
     component: Login,
+    meta: {
+      guestOnly: true,
+    },
   },
 
+  /*
+    Logged-in users do not need to reopen
+    the Register page.
+  */
   {
     path: "/register",
+    name: "register",
     component: Register,
+    meta: {
+      guestOnly: true,
+    },
   },
 ];
 
@@ -66,18 +110,47 @@ const router = createRouter({
 
   scrollBehavior: () => ({
     top: 0,
+    behavior: "smooth",
   }),
 });
 
-router.beforeEach((to, _from, next) => {
-  const isAuth = localStorage.getItem("isAuth");
+/*
+  Global authentication guard.
+*/
+router.beforeEach((to) => {
+  const isAuthenticated =
+    localStorage.getItem("isAuth") === "true";
 
-  if (to.meta.requiresAuth && !isAuth) {
-    alert("You need to login first");
-    next("/login");
-  } else {
-    next();
+  /*
+    Sends unauthenticated users to Login when
+    they attempt to open Favorites or Shopping List.
+  */
+  if (
+    to.meta.requiresAuth &&
+    !isAuthenticated
+  ) {
+    return {
+      name: "login",
+      query: {
+        redirect: to.fullPath,
+      },
+    };
   }
+
+  /*
+    Sends authenticated users away from
+    Login and Register pages.
+  */
+  if (
+    to.meta.guestOnly &&
+    isAuthenticated
+  ) {
+    return {
+      name: "home",
+    };
+  }
+
+  return true;
 });
 
 export default router;

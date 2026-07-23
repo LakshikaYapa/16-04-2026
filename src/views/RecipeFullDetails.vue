@@ -4,14 +4,20 @@ import {
   onMounted,
   ref,
 } from "vue";
-import { useRoute } from "vue-router";
-import { useFavorites } from "../composables/useFavorites";
+import {
+  useRoute,
+  useRouter,
+} from "vue-router";
+import {
+  useFavorites,
+} from "../composables/useFavorites";
 import type {
   Recipe,
   ShoppingItem,
 } from "../types";
 
 const route = useRoute();
+const router = useRouter();
 
 const SHOPPING_LIST_UPDATED_EVENT =
   "kitchen-magic-shopping-list-updated";
@@ -26,7 +32,30 @@ const {
 } = useFavorites();
 
 /*
-  Loads a single recipe from DummyJSON.
+  Checks whether the user is currently logged in.
+*/
+const isAuthenticated = (): boolean => {
+  return (
+    localStorage.getItem("isAuth") === "true"
+  );
+};
+
+/*
+  Sends an unauthenticated user to Login and
+  remembers the current recipe URL.
+*/
+const redirectToLogin =
+  async (): Promise<void> => {
+    await router.push({
+      name: "login",
+      query: {
+        redirect: route.fullPath,
+      },
+    });
+  };
+
+/*
+  Loads the selected recipe from DummyJSON.
 */
 const fetchRecipe = async (): Promise<void> => {
   loading.value = true;
@@ -58,79 +87,102 @@ const fetchRecipe = async (): Promise<void> => {
 };
 
 /*
-  Safely loads the Shopping List from localStorage.
+  Safely loads Shopping List data.
 */
-const readShoppingList = (): ShoppingItem[] => {
-  try {
-    const storedList =
-      localStorage.getItem("shoppingList");
+const readShoppingList =
+  (): ShoppingItem[] => {
+    try {
+      const storedList =
+        localStorage.getItem("shoppingList");
 
-    if (!storedList) {
+      if (!storedList) {
+        return [];
+      }
+
+      return JSON.parse(
+        storedList
+      ) as ShoppingItem[];
+    } catch {
       return [];
     }
-
-    return JSON.parse(
-      storedList
-    ) as ShoppingItem[];
-  } catch {
-    return [];
-  }
-};
+  };
 
 /*
-  Adds all ingredients of the selected recipe
-  to the Shopping List.
+  Adds recipe ingredients to the Shopping List.
 
-  Duplicate ingredients are not added.
+  Login is required only when the user attempts
+  to save the ingredients.
 */
-const addToShoppingList = (): void => {
-  if (!recipe.value) {
-    return;
-  }
-
-  const shoppingList = readShoppingList();
-
-  recipe.value.ingredients.forEach(
-    (ingredient) => {
-      const ingredientAlreadyExists =
-        shoppingList.some(
-          (item) =>
-            item.name.toLowerCase() ===
-            ingredient.toLowerCase()
-        );
-
-      if (!ingredientAlreadyExists) {
-        shoppingList.push({
-          name: ingredient,
-          checked: false,
-        });
-      }
+const addToShoppingList =
+  async (): Promise<void> => {
+    if (!isAuthenticated()) {
+      await redirectToLogin();
+      return;
     }
-  );
 
-  localStorage.setItem(
-    "shoppingList",
-    JSON.stringify(shoppingList)
-  );
+    if (!recipe.value) {
+      return;
+    }
 
-  /*
-    Informs NavBar that the Shopping List changed.
-  */
-  window.dispatchEvent(
-    new Event(SHOPPING_LIST_UPDATED_EVENT)
-  );
+    const shoppingList = readShoppingList();
 
-  alert(
-    "Ingredients added to Shopping List 🛒"
-  );
-};
+    let addedItemCount = 0;
+
+    recipe.value.ingredients.forEach(
+      (ingredient) => {
+        const ingredientAlreadyExists =
+          shoppingList.some(
+            (item) =>
+              item.name.toLowerCase() ===
+              ingredient.toLowerCase()
+          );
+
+        if (!ingredientAlreadyExists) {
+          shoppingList.push({
+            name: ingredient,
+            checked: false,
+          });
+
+          addedItemCount += 1;
+        }
+      }
+    );
+
+    localStorage.setItem(
+      "shoppingList",
+      JSON.stringify(shoppingList)
+    );
+
+    window.dispatchEvent(
+      new Event(
+        SHOPPING_LIST_UPDATED_EVENT
+      )
+    );
+
+    if (addedItemCount === 0) {
+      alert(
+        "These ingredients are already in your Shopping List."
+      );
+
+      return;
+    }
+
+    alert(
+      `${addedItemCount} ingredient${
+        addedItemCount === 1 ? "" : "s"
+      } added to your Shopping List 🛒`
+    );
+  };
 
 /*
-  Returns true when the current recipe
-  is already in Favorites.
+  Checks whether the current recipe is saved
+  as a favorite.
 */
 const favorite = computed<boolean>(() => {
-  if (!recipe.value) {
+  if (
+    !recipe.value ||
+    !isAuthenticated()
+  ) {
     return false;
   }
 
@@ -138,16 +190,24 @@ const favorite = computed<boolean>(() => {
 });
 
 /*
-  Adds or removes the current recipe
-  from Favorites.
-*/
-const handleFavorite = (): void => {
-  if (!recipe.value) {
-    return;
-  }
+  Adds or removes the current recipe from Favorites.
 
-  toggleFavorite(recipe.value);
-};
+  Login is required only when the user attempts
+  to save the recipe.
+*/
+const handleFavorite =
+  async (): Promise<void> => {
+    if (!isAuthenticated()) {
+      await redirectToLogin();
+      return;
+    }
+
+    if (!recipe.value) {
+      return;
+    }
+
+    toggleFavorite(recipe.value);
+  };
 
 onMounted(() => {
   fetchRecipe();
@@ -179,8 +239,16 @@ onMounted(() => {
 
       <button
         type="button"
-        class="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-black transition hover:bg-yellow-400"
-        @click="$router.back()"
+        class="rounded-lg bg-orange-500 px-6 py-2 font-semibold text-white transition hover:bg-orange-600"
+        @click="fetchRecipe"
+      >
+        Try Again
+      </button>
+
+      <button
+        type="button"
+        class="rounded-lg bg-gray-800 px-6 py-2 font-semibold transition hover:bg-gray-700"
+        @click="router.back()"
       >
         ⬅ Go Back
       </button>
@@ -192,32 +260,30 @@ onMounted(() => {
       class="w-full max-w-4xl"
     >
       <!-- Recipe Image -->
-      <div class="relative">
-        <img
-          :src="recipe.image"
-          :alt="recipe.name"
-          class="mb-5 h-56 w-full rounded-xl object-cover shadow-lg sm:h-80"
-        />
+      <img
+        :src="recipe.image"
+        :alt="recipe.name"
+        class="mb-5 h-56 w-full rounded-xl object-cover shadow-lg sm:h-80"
+      />
 
-        <!-- Favorite Button -->
-        <div class="mb-4 flex justify-end">
-          <button
-            type="button"
-            class="rounded-full bg-red-500 px-5 py-2 font-semibold text-white transition duration-300 hover:scale-105 hover:bg-red-600"
-            :aria-label="
-              favorite
-                ? `Remove ${recipe.name} from Favorites`
-                : `Add ${recipe.name} to Favorites`
-            "
-            @click="handleFavorite"
-          >
-            {{
-              favorite
-                ? "❤️ Remove from Favorites"
-                : "🤍 Add to Favorites"
-            }}
-          </button>
-        </div>
+      <!-- Favorite Button -->
+      <div class="mb-4 flex justify-end">
+        <button
+          type="button"
+          class="rounded-full bg-red-500 px-5 py-2 font-semibold text-white transition duration-300 hover:scale-105 hover:bg-red-600"
+          :aria-label="
+            favorite
+              ? `Remove ${recipe.name} from Favorites`
+              : `Add ${recipe.name} to Favorites`
+          "
+          @click="handleFavorite"
+        >
+          {{
+            favorite
+              ? "❤️ Remove from Favorites"
+              : "🤍 Add to Favorites"
+          }}
+        </button>
       </div>
 
       <!-- Recipe Name -->
@@ -228,7 +294,7 @@ onMounted(() => {
       </h1>
 
       <!-- Recipe Information -->
-      <div
+      <section
         class="mb-7 grid grid-cols-2 gap-3 rounded-xl bg-gray-900 p-4 text-center text-sm text-gray-300 sm:grid-cols-4 sm:text-base"
       >
         <div>
@@ -286,7 +352,7 @@ onMounted(() => {
             {{ recipe.rating }}
           </strong>
         </div>
-      </div>
+      </section>
 
       <!-- Ingredients and Instructions -->
       <div class="grid gap-6 md:grid-cols-2">
@@ -355,7 +421,7 @@ onMounted(() => {
         <button
           type="button"
           class="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-black transition hover:bg-yellow-400"
-          @click="$router.back()"
+          @click="router.back()"
         >
           ⬅ Back
         </button>
