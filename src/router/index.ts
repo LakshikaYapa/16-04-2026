@@ -1,83 +1,83 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import ShoppingList from "../views/ShoppingList.vue";
-import Home from '../views/Home.vue';
-import RecipeDetails from '../views/RecipeDetails.vue';
-import Login from '../views/Login.vue';
-import Register from '../views/Register.vue';
-import RecipeFullDetails from "../views/RecipeFullDetails.vue";
+import { createRouter, createWebHistory } from "vue-router";
 
-// NEW IMPORT
+import Home from "../views/Home.vue";
+import About from "../views/About.vue";
+import ShoppingList from "../views/ShoppingList.vue";
+import RecipeDetails from "../views/RecipeDetails.vue";
+import RecipeFullDetails from "../views/RecipeFullDetails.vue";
+import Login from "../views/Login.vue";
+import Register from "../views/Register.vue";
 import MyRecipes from "../views/MyRecipes.vue";
 import Favorites from "../views/Favorites.vue";
 
 const routes = [
   {
-    path: '/',
-    component: Home
+    path: "/",
+    component: Home,
   },
 
   {
-    path: '/recipes/:type',
+    path: "/about",
+    component: About,
+  },
+
+  {
+    path: "/recipes/:type",
     component: RecipeDetails,
     meta: {
-      requiresAuth: true
-    }
-  },
-
-  {
-  path: "/shopping-list",
-  component: ShoppingList
-  },
-  
-  {
-    path: '/login',
-    component: Login
-  },
-
-  {
-    path: '/register',
-    component: Register
+      requiresAuth: true,
+    },
   },
 
   {
     path: "/recipe/:id",
-    component: RecipeFullDetails
+    component: RecipeFullDetails,
   },
 
-  // NEW PAGE
+  {
+    path: "/shopping-list",
+    component: ShoppingList,
+  },
+
+  {
+    path: "/favorites",
+    component: Favorites,
+  },
+
   {
     path: "/my-recipes",
-    component: MyRecipes
+    component: MyRecipes,
   },
 
-   {
-  path: "/favorites",
-  component: Favorites
-}
+  {
+    path: "/login",
+    component: Login,
+  },
+
+  {
+    path: "/register",
+    component: Register,
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+
+  scrollBehavior: () => ({
+    top: 0,
+  }),
 });
 
-// AUTH GUARD
-router.beforeEach((to, from, next) => {
-
+router.beforeEach((to, _from, next) => {
   const isAuth = localStorage.getItem("isAuth");
 
   if (to.meta.requiresAuth && !isAuth) {
-
-    alert("You want to login first");
-
-    next('/login');
-
+    alert("You need to login first");
+    next("/login");
   } else {
-
     next();
-
   }
-
 });
 
 export default router;

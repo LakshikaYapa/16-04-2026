@@ -1,22 +1,23 @@
 <template>
-  <div>
-    <!-- ❗ Hide navbar only in login/register -->
+  <div class="min-h-screen bg-black text-white">
     <NavBar v-if="!isAuthPage" />
 
-    <router-view />
+    <main>
+      <router-view />
+    </main>
   </div>
 </template>
 
-<script>
-import NavBar from './components/NavBar.vue';
+<script lang="ts">
+import NavBar from "./components/NavBar.vue";
 
 export default {
   components: { NavBar },
 
   computed: {
-    isAuthPage() {
-      return this.$route.path === '/login' || this.$route.path === '/register';
-    }
-  }
+    isAuthPage(): boolean {
+      return ["/login", "/register"].includes(this.$route.path);
+    },
+  },
 };
 </script>
