@@ -72,10 +72,6 @@ const openCategories = (): void => {
   showMobileMenu.value = false;
 };
 
-/*
-  Opens the Home page and smoothly scrolls
-  to its About section.
-*/
 const goToAbout = async (): Promise<void> => {
   showMobileMenu.value = false;
 
@@ -108,6 +104,10 @@ const logout = async (): Promise<void> => {
     localStorage.removeItem(key);
   });
 
+  /*
+    Favorites and Shopping List data are preserved.
+    Their counts are hidden while the user is logged out.
+  */
   isAuth.value = false;
   showMobileMenu.value = false;
 
@@ -228,7 +228,10 @@ onBeforeUnmount(() => {
             🛒 Shopping List
 
             <span
-              v-if="shoppingCount > 0"
+              v-if="
+                isAuth &&
+                shoppingCount > 0
+              "
               class="ml-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
             >
               {{ shoppingCount }}
@@ -247,7 +250,10 @@ onBeforeUnmount(() => {
             ❤️ Favorites
 
             <span
-              v-if="favoriteCount > 0"
+              v-if="
+                isAuth &&
+                favoriteCount > 0
+              "
               class="ml-1 rounded-full bg-pink-600 px-2 py-1 text-xs text-white"
             >
               {{ favoriteCount }}
@@ -336,7 +342,12 @@ onBeforeUnmount(() => {
       >
         🛒 Shopping List
 
-        <span v-if="shoppingCount > 0">
+        <span
+          v-if="
+            isAuth &&
+            shoppingCount > 0
+          "
+        >
           ({{ shoppingCount }})
         </span>
       </button>
@@ -350,7 +361,12 @@ onBeforeUnmount(() => {
       >
         ❤️ Favorites
 
-        <span v-if="favoriteCount > 0">
+        <span
+          v-if="
+            isAuth &&
+            favoriteCount > 0
+          "
+        >
           ({{ favoriteCount }})
         </span>
       </button>

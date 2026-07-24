@@ -17,9 +17,6 @@ const password = ref("");
 const loading = ref(false);
 const error = ref("");
 
-/*
-  Safely reads locally registered users.
-*/
 const readRegisteredUsers =
   (): RegisteredUser[] => {
     try {
@@ -38,16 +35,12 @@ const readRegisteredUsers =
     }
   };
 
-/*
-  Gets the page the user originally attempted
-  to open before being redirected to Login.
-*/
 const getRedirectPath = (): string => {
   const redirectPath =
     route.query.redirect;
 
   /*
-    Only allows internal application paths.
+    Only internal application paths are allowed.
   */
   if (
     typeof redirectPath === "string" &&
@@ -60,33 +53,37 @@ const getRedirectPath = (): string => {
   return "/";
 };
 
-/*
-  Saves authentication information for a
-  locally registered user.
-*/
 const saveLocalUserSession = (
   user: RegisteredUser
 ): void => {
-  localStorage.setItem("isAuth", "true");
+  localStorage.setItem(
+    "isAuth",
+    "true"
+  );
+
   localStorage.setItem(
     "userName",
     user.name
   );
+
   localStorage.setItem(
     "userCountry",
     user.country
   );
-  localStorage.setItem("role", "user");
+
+  localStorage.setItem(
+    "role",
+    "user"
+  );
 };
 
-/*
-  Saves authentication information returned
-  by the DummyJSON login endpoint.
-*/
 const saveApiUserSession = (
   user: AuthResponse
 ): void => {
-  localStorage.setItem("isAuth", "true");
+  localStorage.setItem(
+    "isAuth",
+    "true"
+  );
 
   localStorage.setItem(
     "accessToken",
@@ -98,105 +95,105 @@ const saveApiUserSession = (
     `${user.firstName} ${user.lastName}`.trim()
   );
 
-  localStorage.setItem("role", "user");
+  localStorage.setItem(
+    "role",
+    "user"
+  );
 };
 
-/*
-  Attempts local authentication first.
+const loginUser =
+  async (): Promise<void> => {
+    loading.value = true;
+    error.value = "";
 
-  If no matching local account exists, it attempts
-  authentication using the DummyJSON API.
-*/
-const loginUser = async (): Promise<void> => {
-  loading.value = true;
-  error.value = "";
+    try {
+      const identifier =
+        loginIdentifier.value.trim();
 
-  try {
-    const identifier =
-      loginIdentifier.value.trim();
+      const enteredPassword =
+        password.value;
 
-    const enteredPassword =
-      password.value;
+      const registeredUsers =
+        readRegisteredUsers();
 
-    const registeredUsers =
-      readRegisteredUsers();
+      const localUser =
+        registeredUsers.find(
+          (user) =>
+            user.email.toLowerCase() ===
+              identifier.toLowerCase() &&
+            user.password ===
+              enteredPassword
+        );
 
-    const localUser =
-      registeredUsers.find(
-        (user) =>
-          user.email.toLowerCase() ===
-            identifier.toLowerCase() &&
-          user.password === enteredPassword
+      /*
+        Login using a locally registered account.
+      */
+      if (localUser) {
+        saveLocalUserSession(localUser);
+
+        await router.replace(
+          getRedirectPath()
+        );
+
+        return;
+      }
+
+      /*
+        Login using the DummyJSON authentication API.
+      */
+      const response = await fetch(
+        "https://dummyjson.com/auth/login",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            username: identifier,
+            password: enteredPassword,
+            expiresInMins: 60,
+          }),
+        }
       );
 
-    /*
-      Local account login.
-    */
-    if (localUser) {
-      saveLocalUserSession(localUser);
+      if (!response.ok) {
+        throw new Error(
+          "Invalid email, username or password."
+        );
+      }
+
+      const authenticatedUser =
+        (await response.json()) as AuthResponse;
+
+      saveApiUserSession(
+        authenticatedUser
+      );
 
       await router.replace(
         getRedirectPath()
       );
-
-      return;
+    } catch (caughtError) {
+      error.value =
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Login failed. Please try again.";
+    } finally {
+      loading.value = false;
     }
-
-    /*
-      DummyJSON authentication.
-    */
-    const response = await fetch(
-      "https://dummyjson.com/auth/login",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          username: identifier,
-          password: enteredPassword,
-          expiresInMins: 60,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Invalid email, username or password."
-      );
-    }
-
-    const authenticatedUser =
-      (await response.json()) as AuthResponse;
-
-    saveApiUserSession(authenticatedUser);
-
-    /*
-      Returns the user to the page they originally
-      attempted to use.
-    */
-    await router.replace(
-      getRedirectPath()
-    );
-  } catch (caughtError) {
-    error.value =
-      caughtError instanceof Error
-        ? caughtError.message
-        : "Login failed. Please try again.";
-  } finally {
-    loading.value = false;
-  }
-};
+  };
 
 /*
-  Returns to the public Home page without logging in.
+  Returns the guest to the page that caused
+  the Login redirect instead of always going Home.
 */
 const continueAsGuest =
   async (): Promise<void> => {
-    await router.push("/");
+    await router.replace(
+      getRedirectPath()
+    );
   };
 </script>
 
@@ -226,6 +223,7 @@ const continueAsGuest =
         class="space-y-5"
         @submit.prevent="loginUser"
       >
+        <!-- Email or Username -->
         <div>
           <label
             for="login-identifier"
@@ -245,6 +243,7 @@ const continueAsGuest =
           />
         </div>
 
+        <!-- Password -->
         <div>
           <label
             for="login-password"
@@ -307,7 +306,7 @@ const continueAsGuest =
         </router-link>
       </p>
 
-      <!-- Guest Option -->
+      <!-- Continue as Guest -->
       <button
         type="button"
         class="mt-5 w-full rounded-xl border border-white/15 px-5 py-3 font-medium text-gray-200 transition hover:bg-white/10"
