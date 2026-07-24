@@ -1,75 +1,99 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 
+interface CuisineType {
+  name: string;
+  routeType: string;
+  image: string;
+  imageAlt: string;
+}
+
 const router = useRouter();
 
-const cuisines = [
-  { name: "Italian", image: "/cuisines/Italian.webp" },
-  { name: "Asian", image: "/cuisines/Asian.png" },
-  { name: "American", image: "/cuisines/American.webp" },
-  { name: "Mexican", image: "/cuisines/Mexican.png" },
+const cuisines: CuisineType[] = [
+  {
+    name: "Italian",
+    routeType: "italian",
+    image: "/cuisines/Italian.webp",
+    imageAlt: "Italian cuisine recipes",
+  },
+  {
+    name: "Asian",
+    routeType: "asian",
+    image: "/cuisines/Asian.png",
+    imageAlt: "Asian cuisine recipes",
+  },
+  {
+    name: "American",
+    routeType: "american",
+    image: "/cuisines/American.webp",
+    imageAlt: "American cuisine recipes",
+  },
+  {
+    name: "Mexican",
+    routeType: "mexican",
+    image: "/cuisines/Mexican.png",
+    imageAlt: "Mexican cuisine recipes",
+  },
 ];
 
-const goToDetails = (type: string) => {
-  router.push(`/recipes/${type.toLowerCase()}`);
+/*
+  Opens the selected cuisine category.
+*/
+const goToDetails = async (
+  cuisineType: string
+): Promise<void> => {
+  await router.push(
+    `/recipes/${cuisineType}`
+  );
 };
 </script>
 
 <template>
-  <section class="bg-black text-white py-16 px-6">
-
-    <div class="max-w-6xl mx-auto">
-
-      <!-- TITLE -->
-      <h2 class="text-4xl font-bold text-center mb-4">
+  <section
+    class="bg-black px-6 py-16 text-white"
+  >
+    <div class="mx-auto max-w-6xl">
+      <h2
+        class="mb-4 text-center text-3xl font-bold sm:text-4xl"
+      >
         Cuisine Types
       </h2>
 
-      <!-- DESCRIPTION -->
-      <p class="text-center text-gray-400 mb-10">
+      <p
+        class="mb-10 text-center text-gray-400"
+      >
         Explore cuisines from around the world.
       </p>
 
-      <!-- GRID -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-
-        <div
+      <div
+        class="grid grid-cols-2 gap-6 text-center md:grid-cols-4 md:gap-8"
+      >
+        <button
           v-for="cuisine in cuisines"
-          :key="cuisine.name"
-          @click="goToDetails(cuisine.name)"
-          class="cursor-pointer group"
+          :key="cuisine.routeType"
+          type="button"
+          class="group flex flex-col items-center rounded-2xl p-3 transition hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-orange-500/40"
+          :aria-label="`Browse ${cuisine.name} recipes`"
+          @click="
+            goToDetails(
+              cuisine.routeType
+            )
+          "
         >
-          <!-- 🔥 UPDATED IMAGE -->
-          <img :src="cuisine.image" class="img-style"/>
+          <img
+            :src="cuisine.image"
+            :alt="cuisine.imageAlt"
+            class="h-32 w-full object-contain transition duration-300 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_rgba(249,115,22,0.5)] sm:h-40 lg:h-48"
+          />
 
-          <!-- LABEL -->
-          <p class="label">{{ cuisine.name }}</p>
-        </div>
-
+          <span
+            class="mt-4 text-base font-medium transition group-hover:text-orange-400 sm:text-lg"
+          >
+            {{ cuisine.name }}
+          </span>
+        </button>
       </div>
-
     </div>
   </section>
 </template>
-
-<style scoped>
-.img-style {
-  width: 100%;
-  height: 200px; /* 🔥 increased from 160px */
-  object-fit: contain;
-  transition: all 0.3s ease;
-}
-
-/* 🔥 hover effect */
-.img-style:hover {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.6));
-}
-
-/* label */
-.label {
-  margin-top: 12px;
-  font-size: 17px;
-  font-weight: 500;
-}
-</style>
