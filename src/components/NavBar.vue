@@ -1,24 +1,22 @@
 <script setup lang="ts">
 import {
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
 } from "vue";
 import { useRouter } from "vue-router";
+import {
+  FAVORITES_UPDATED_EVENT,
+} from "../composables/useFavorites";
 import type {
   Recipe,
   ShoppingItem,
 } from "../types";
-import {
-  FAVORITES_UPDATED_EVENT,
-} from "../composables/useFavorites";
 import SideMenu from "./SideMenu.vue";
 
 const router = useRouter();
 
-/*
-  Custom event used when the shopping list changes.
-*/
 const SHOPPING_LIST_UPDATED_EVENT =
   "kitchen-magic-shopping-list-updated";
 
@@ -28,14 +26,12 @@ const showMobileMenu = ref(false);
 const shoppingCount = ref(0);
 const favoriteCount = ref(0);
 
-/*
-  Safely reads an array from localStorage.
-*/
 const readStoredArray = <T,>(
   key: string
 ): T[] => {
   try {
-    const storedData = localStorage.getItem(key);
+    const storedData =
+      localStorage.getItem(key);
 
     if (!storedData) {
       return [];
@@ -47,31 +43,23 @@ const readStoredArray = <T,>(
   }
 };
 
-/*
-  Checks whether the user is logged in.
-*/
 const checkAuth = (): void => {
   isAuth.value =
     localStorage.getItem("isAuth") === "true";
 };
 
-/*
-  Loads Shopping List and Favorites counts.
-*/
 const loadCounts = (): void => {
-  const shoppingItems =
-    readStoredArray<ShoppingItem>("shoppingList");
+  shoppingCount.value =
+    readStoredArray<ShoppingItem>(
+      "shoppingList"
+    ).length;
 
-  const favoriteRecipes =
-    readStoredArray<Recipe>("favorites");
-
-  shoppingCount.value = shoppingItems.length;
-  favoriteCount.value = favoriteRecipes.length;
+  favoriteCount.value =
+    readStoredArray<Recipe>(
+      "favorites"
+    ).length;
 };
 
-/*
-  Navigates to a page and closes the mobile menu.
-*/
 const closeMobileAndGo = async (
   path: string
 ): Promise<void> => {
@@ -79,18 +67,34 @@ const closeMobileAndGo = async (
   await router.push(path);
 };
 
-/*
-  Opens the category side menu.
-*/
 const openCategories = (): void => {
   showMenu.value = true;
   showMobileMenu.value = false;
 };
 
 /*
-  Logs out the current user and removes saved
-  authentication information.
+  Opens the Home page and smoothly scrolls
+  to its About section.
 */
+const goToAbout = async (): Promise<void> => {
+  showMobileMenu.value = false;
+
+  if (
+    router.currentRoute.value.path !== "/"
+  ) {
+    await router.push("/");
+    await nextTick();
+  }
+
+  const aboutSection =
+    document.getElementById("about");
+
+  aboutSection?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+};
+
 const logout = async (): Promise<void> => {
   const authenticationKeys = [
     "isAuth",
@@ -110,9 +114,6 @@ const logout = async (): Promise<void> => {
   await router.push("/");
 };
 
-/*
-  Loads the initial state and registers event listeners.
-*/
 onMounted(() => {
   checkAuth();
   loadCounts();
@@ -138,10 +139,6 @@ onMounted(() => {
   );
 });
 
-/*
-  Removes all event listeners when the component
-  is destroyed.
-*/
 onBeforeUnmount(() => {
   window.removeEventListener(
     "focus",
@@ -214,7 +211,7 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="nav-item"
-            @click="router.push('/about')"
+            @click="goToAbout"
           >
             About
           </button>
@@ -224,7 +221,9 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="nav-item text-yellow-400"
-            @click="router.push('/shopping-list')"
+            @click="
+              router.push('/shopping-list')
+            "
           >
             🛒 Shopping List
 
@@ -241,7 +240,9 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="nav-item text-pink-400"
-            @click="router.push('/favorites')"
+            @click="
+              router.push('/favorites')
+            "
           >
             ❤️ Favorites
 
@@ -321,7 +322,7 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="mobile-link"
-        @click="closeMobileAndGo('/about')"
+        @click="goToAbout"
       >
         About
       </button>

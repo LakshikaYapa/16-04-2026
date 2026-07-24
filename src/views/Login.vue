@@ -202,7 +202,7 @@ const continueAsGuest =
 
 <template>
   <main
-    class="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-orange-950 px-5 py-10 text-white"
+    class="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-950 via-gray-900 to-orange-950 px-5 py-10 text-white"
   >
     <section
       class="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-7 shadow-2xl backdrop-blur-xl sm:p-9"
