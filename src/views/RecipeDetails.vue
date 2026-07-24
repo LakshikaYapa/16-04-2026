@@ -8,9 +8,11 @@ import {
   useRoute,
   useRouter,
 } from "vue-router";
+import {
+  getAllRecipes,
+} from "../services/recipeService";
 import type {
   Recipe,
-  RecipesResponse,
 } from "../types";
 
 const route = useRoute();
@@ -62,14 +64,15 @@ const isNonVegetarianRecipe = (
 };
 
 /*
-  Filters recipes according to the route category.
+  Filters recipes according to the category
+  included in the current route.
 */
 const filterRecipes = (
   allRecipes: Recipe[],
   category: string
 ): Recipe[] => {
   /*
-    Special filtering for Non Vegetarian recipes.
+    Special filtering for non-vegetarian recipes.
   */
   if (category === "non-vegetarian") {
     return allRecipes.filter(
@@ -78,9 +81,7 @@ const filterRecipes = (
   }
 
   /*
-    Filtering for Vegetarian recipes.
-    A recipe is treated as vegetarian when its
-    tags contain "vegetarian".
+    Special filtering for vegetarian recipes.
   */
   if (category === "vegetarian") {
     return allRecipes.filter((recipe) =>
@@ -93,8 +94,8 @@ const filterRecipes = (
   }
 
   /*
-    Standard filtering for meals, cuisines
-    and other tags.
+    Standard filtering for meal types,
+    cuisines and recipe tags.
   */
   return allRecipes.filter((recipe) => {
     const mealTypes =
@@ -119,26 +120,16 @@ const filterRecipes = (
 };
 
 /*
-  Loads all recipes from DummyJSON and filters
-  them using the selected route category.
+  Loads recipe data through recipeService
+  and applies the selected category filter.
 */
-const fetchRecipes = async (): Promise<void> => {
+const loadRecipes = async (): Promise<void> => {
   loading.value = true;
   error.value = "";
 
   try {
-    const response = await fetch(
-      "https://dummyjson.com/recipes?limit=0"
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Could not load recipes."
-      );
-    }
-
-    const data =
-      (await response.json()) as RecipesResponse;
+    const allRecipes =
+      await getAllRecipes();
 
     const selectedCategory =
       String(route.params.type)
@@ -146,7 +137,7 @@ const fetchRecipes = async (): Promise<void> => {
         .trim();
 
     recipes.value = filterRecipes(
-      data.recipes,
+      allRecipes,
       selectedCategory
     );
   } catch (caughtError) {
@@ -160,26 +151,35 @@ const fetchRecipes = async (): Promise<void> => {
 };
 
 /*
-  Opens the full details page for one recipe.
+  Opens the selected recipe's full details page.
 */
 const openRecipe = async (
   recipeId: number
 ): Promise<void> => {
-  await router.push(`/recipe/${recipeId}`);
+  await router.push(
+    `/recipe/${recipeId}`
+  );
+};
+
+/*
+  Returns to the Home page.
+*/
+const returnHome = async (): Promise<void> => {
+  await router.push("/");
 };
 
 onMounted(() => {
-  fetchRecipes();
+  loadRecipes();
 });
 
 /*
-  Reloads recipes when the route category changes,
-  such as Breakfast to Dinner.
+  Reloads and filters recipes when the category
+  route changes without recreating the component.
 */
 watch(
   () => route.params.type,
   () => {
-    fetchRecipes();
+    loadRecipes();
   }
 );
 </script>
@@ -188,28 +188,29 @@ watch(
   <main
     class="min-h-screen bg-black px-5 py-10 text-white sm:px-8"
   >
+    <!-- Page Title -->
     <h1
       class="mb-8 text-center text-3xl font-bold capitalize sm:text-4xl"
     >
       {{
         String($route.params.type)
-          .replace("-", " ")
+          .replaceAll("-", " ")
       }}
       Recipes
     </h1>
 
     <!-- Loading State -->
-    <div
+    <section
       v-if="loading"
       class="flex min-h-[40vh] items-center justify-center"
     >
       <p class="text-gray-400">
         Loading recipes...
       </p>
-    </div>
+    </section>
 
     <!-- Error State -->
-    <div
+    <section
       v-else-if="error"
       class="flex min-h-[40vh] flex-col items-center justify-center gap-5 text-center"
     >
@@ -220,11 +221,11 @@ watch(
       <button
         type="button"
         class="rounded-lg bg-orange-500 px-6 py-2 font-semibold text-white transition hover:bg-orange-600"
-        @click="fetchRecipes"
+        @click="loadRecipes"
       >
         Try Again
       </button>
-    </div>
+    </section>
 
     <!-- Recipe Grid -->
     <section
@@ -235,7 +236,8 @@ watch(
         v-for="recipe in recipes"
         :key="recipe.id"
         type="button"
-        class="overflow-hidden rounded-xl border border-white/10 bg-gray-900 text-left shadow-lg transition duration-300 hover:-translate-y-1 hover:border-orange-500/50 hover:shadow-orange-500/10"
+        class="overflow-hidden rounded-xl border border-white/10 bg-gray-900 text-left shadow-lg transition duration-300 hover:-translate-y-1 hover:border-orange-500/50 hover:shadow-orange-500/10 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+        :aria-label="`View ${recipe.name} recipe details`"
         @click="openRecipe(recipe.id)"
       >
         <img
@@ -252,14 +254,31 @@ watch(
           </h2>
 
           <div
-            class="flex items-center justify-between text-sm text-gray-400"
+            class="flex items-center justify-between gap-3 text-sm text-gray-400"
           >
-            <span>
+            <span class="truncate">
               {{ recipe.cuisine }}
             </span>
 
-            <span>
+            <span class="flex-none">
               ⭐ {{ recipe.rating }}
+            </span>
+          </div>
+
+          <div
+            class="mt-3 flex items-center justify-between text-xs text-gray-500"
+          >
+            <span>
+              ⏱
+              {{
+                recipe.prepTimeMinutes +
+                recipe.cookTimeMinutes
+              }}
+              min
+            </span>
+
+            <span>
+              {{ recipe.difficulty }}
             </span>
           </div>
         </div>
@@ -271,14 +290,16 @@ watch(
       v-else
       class="flex min-h-[40vh] flex-col items-center justify-center text-center"
     >
-      <p class="mb-5 text-xl text-gray-400">
+      <p
+        class="mb-5 text-xl text-gray-400"
+      >
         No recipes found 😢
       </p>
 
       <button
         type="button"
         class="rounded-lg bg-yellow-500 px-6 py-2 font-semibold text-black transition hover:bg-yellow-400"
-        @click="router.push('/')"
+        @click="returnHome"
       >
         Return Home
       </button>

@@ -11,6 +11,9 @@ import {
 import {
   useFavorites,
 } from "../composables/useFavorites";
+import {
+  getRecipeById,
+} from "../services/recipeService";
 import type {
   Recipe,
   ShoppingItem,
@@ -32,7 +35,7 @@ const {
 } = useFavorites();
 
 /*
-  Checks whether the user is currently logged in.
+  Checks whether the user is logged in.
 */
 const isAuthenticated = (): boolean => {
   return (
@@ -41,8 +44,8 @@ const isAuthenticated = (): boolean => {
 };
 
 /*
-  Sends an unauthenticated user to Login and
-  remembers the current recipe URL.
+  Redirects a guest to Login while remembering
+  the current recipe URL.
 */
 const redirectToLogin =
   async (): Promise<void> => {
@@ -55,27 +58,26 @@ const redirectToLogin =
   };
 
 /*
-  Loads the selected recipe from DummyJSON.
+  Loads the selected recipe through recipeService.
 */
-const fetchRecipe = async (): Promise<void> => {
+const loadRecipe = async (): Promise<void> => {
   loading.value = true;
   error.value = "";
 
   try {
-    const recipeId = String(route.params.id);
+    const recipeId = Number(route.params.id);
 
-    const response = await fetch(
-      `https://dummyjson.com/recipes/${recipeId}`
-    );
-
-    if (!response.ok) {
+    if (
+      !Number.isInteger(recipeId) ||
+      recipeId <= 0
+    ) {
       throw new Error(
-        "Could not load this recipe."
+        "Invalid recipe identifier."
       );
     }
 
     recipe.value =
-      (await response.json()) as Recipe;
+      await getRecipeById(recipeId);
   } catch (caughtError) {
     error.value =
       caughtError instanceof Error
@@ -87,7 +89,7 @@ const fetchRecipe = async (): Promise<void> => {
 };
 
 /*
-  Safely loads Shopping List data.
+  Safely reads Shopping List data.
 */
 const readShoppingList =
   (): ShoppingItem[] => {
@@ -108,10 +110,10 @@ const readShoppingList =
   };
 
 /*
-  Adds recipe ingredients to the Shopping List.
+  Adds the current recipe's ingredients
+  to the Shopping List.
 
-  Login is required only when the user attempts
-  to save the ingredients.
+  Login is required only for this saving action.
 */
 const addToShoppingList =
   async (): Promise<void> => {
@@ -125,7 +127,6 @@ const addToShoppingList =
     }
 
     const shoppingList = readShoppingList();
-
     let addedItemCount = 0;
 
     recipe.value.ingredients.forEach(
@@ -175,8 +176,8 @@ const addToShoppingList =
   };
 
 /*
-  Checks whether the current recipe is saved
-  as a favorite.
+  Checks whether the selected recipe
+  is already saved in Favorites.
 */
 const favorite = computed<boolean>(() => {
   if (
@@ -190,10 +191,10 @@ const favorite = computed<boolean>(() => {
 });
 
 /*
-  Adds or removes the current recipe from Favorites.
+  Adds or removes the selected recipe
+  from Favorites.
 
-  Login is required only when the user attempts
-  to save the recipe.
+  Login is required only for this saving action.
 */
 const handleFavorite =
   async (): Promise<void> => {
@@ -210,7 +211,7 @@ const handleFavorite =
   };
 
 onMounted(() => {
-  fetchRecipe();
+  loadRecipe();
 });
 </script>
 
@@ -219,17 +220,17 @@ onMounted(() => {
     class="flex min-h-screen justify-center bg-black px-5 py-8 text-white sm:px-8"
   >
     <!-- Loading State -->
-    <div
+    <section
       v-if="loading"
       class="flex min-h-[50vh] items-center justify-center"
     >
       <p class="text-gray-400">
         Loading recipe...
       </p>
-    </div>
+    </section>
 
     <!-- Error State -->
-    <div
+    <section
       v-else-if="error"
       class="flex min-h-[50vh] flex-col items-center justify-center gap-5 text-center"
     >
@@ -240,7 +241,7 @@ onMounted(() => {
       <button
         type="button"
         class="rounded-lg bg-orange-500 px-6 py-2 font-semibold text-white transition hover:bg-orange-600"
-        @click="fetchRecipe"
+        @click="loadRecipe"
       >
         Try Again
       </button>
@@ -252,7 +253,7 @@ onMounted(() => {
       >
         ⬅ Go Back
       </button>
-    </div>
+    </section>
 
     <!-- Recipe Details -->
     <article
@@ -298,56 +299,40 @@ onMounted(() => {
         class="mb-7 grid grid-cols-2 gap-3 rounded-xl bg-gray-900 p-4 text-center text-sm text-gray-300 sm:grid-cols-4 sm:text-base"
       >
         <div>
-          <span class="block text-lg">
-            ⏱
-          </span>
-
+          <span class="block text-lg">⏱</span>
           <span class="block text-gray-400">
             Prep Time
           </span>
-
           <strong>
             {{ recipe.prepTimeMinutes }} min
           </strong>
         </div>
 
         <div>
-          <span class="block text-lg">
-            🔥
-          </span>
-
+          <span class="block text-lg">🔥</span>
           <span class="block text-gray-400">
             Cook Time
           </span>
-
           <strong>
             {{ recipe.cookTimeMinutes }} min
           </strong>
         </div>
 
         <div>
-          <span class="block text-lg">
-            🍽
-          </span>
-
+          <span class="block text-lg">🍽</span>
           <span class="block text-gray-400">
             Servings
           </span>
-
           <strong>
             {{ recipe.servings }}
           </strong>
         </div>
 
         <div>
-          <span class="block text-lg">
-            ⭐
-          </span>
-
+          <span class="block text-lg">⭐</span>
           <span class="block text-gray-400">
             Rating
           </span>
-
           <strong>
             {{ recipe.rating }}
           </strong>

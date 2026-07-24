@@ -22,7 +22,7 @@ const sections: MenuSection[] = [
     { icon: "🍔", label: "American", type: "american" }, { icon: "🌮", label: "Mexican", type: "mexican" },
   ]},
   { title: "Dietary", color: "text-pink-400", items: [
-    { icon: "🥗", label: "Vegetarian", type: "vegetarian" }, { icon: "🌱", label: "Vegan", type: "vegan" },
+    { icon: "🌱", label: "Vegetarian", type: "vegetarian" }, { icon: "🥗", label: "Non Vegetarian", type: "vegan" },
   ]},
 ];
 </script>

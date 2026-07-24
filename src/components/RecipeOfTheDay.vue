@@ -5,9 +5,11 @@ import {
   ref,
 } from "vue";
 import { useRouter } from "vue-router";
+import {
+  getAllRecipes,
+} from "../services/recipeService";
 import type {
   Recipe,
-  RecipesResponse,
   StoredDailyRecipe,
 } from "../types";
 
@@ -21,11 +23,14 @@ const error = ref("");
   Returns today's date in a stable format.
 */
 const getTodayDate = (): string => {
-  return new Date().toISOString().split("T")[0];
+  return new Date()
+    .toISOString()
+    .split("T")[0] ?? "";
 };
 
 /*
-  Safely reads the saved daily recipe.
+  Safely loads the recipe previously selected
+  for the current day.
 */
 const readSavedDailyRecipe =
   (): StoredDailyRecipe | null => {
@@ -47,10 +52,10 @@ const readSavedDailyRecipe =
 
 /*
   Creates a short description from the
-  first instruction.
+  first preparation instruction.
 */
-const recipeDescription = computed<string>(
-  () => {
+const recipeDescription =
+  computed<string>(() => {
     if (!recipe.value) {
       return "";
     }
@@ -66,13 +71,17 @@ const recipeDescription = computed<string>(
       return firstInstruction;
     }
 
-    return `${firstInstruction.slice(0, 130)}...`;
-  }
-);
+    return `${firstInstruction.slice(
+      0,
+      130
+    )}...`;
+  });
 
 /*
-  Loads a saved recipe for the current day,
-  or selects and saves a new random recipe.
+  Uses today's saved recipe when available.
+
+  Otherwise, it retrieves all recipes through
+  recipeService and selects a random recipe.
 */
 const loadRecipeOfTheDay =
   async (): Promise<void> => {
@@ -84,10 +93,6 @@ const loadRecipeOfTheDay =
       const savedRecipe =
         readSavedDailyRecipe();
 
-      /*
-        Uses the existing recipe if it was
-        already selected today.
-      */
       if (
         savedRecipe &&
         savedRecipe.date === today &&
@@ -97,31 +102,21 @@ const loadRecipeOfTheDay =
         return;
       }
 
-      const response = await fetch(
-        "https://dummyjson.com/recipes?limit=0"
-      );
+      const allRecipes =
+        await getAllRecipes();
 
-      if (!response.ok) {
-        throw new Error(
-          "Unable to load the daily recipe."
-        );
-      }
-
-      const data =
-        (await response.json()) as RecipesResponse;
-
-      if (data.recipes.length === 0) {
+      if (allRecipes.length === 0) {
         throw new Error(
           "No recipes are currently available."
         );
       }
 
       const randomIndex = Math.floor(
-        Math.random() * data.recipes.length
+        Math.random() * allRecipes.length
       );
 
       const selectedRecipe =
-        data.recipes[randomIndex];
+        allRecipes[randomIndex];
 
       if (!selectedRecipe) {
         throw new Error(
@@ -151,20 +146,18 @@ const loadRecipeOfTheDay =
   };
 
 /*
-  Opens the full recipe details page.
-
-  Login is not required because recipe browsing
-  is available to every visitor.
+  Opens the selected recipe without requiring Login.
 */
-const goToDetails = async (): Promise<void> => {
-  if (!recipe.value) {
-    return;
-  }
+const goToDetails =
+  async (): Promise<void> => {
+    if (!recipe.value) {
+      return;
+    }
 
-  await router.push(
-    `/recipe/${recipe.value.id}`
-  );
-};
+    await router.push(
+      `/recipe/${recipe.value.id}`
+    );
+  };
 
 onMounted(() => {
   loadRecipeOfTheDay();
@@ -211,15 +204,17 @@ onMounted(() => {
     <button
       v-else-if="recipe"
       type="button"
-      class="group mx-auto block w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-gray-900 text-left shadow-lg transition duration-300 hover:-translate-y-1 hover:border-orange-500/50 hover:shadow-orange-500/10"
+      class="group mx-auto block w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-gray-900 text-left shadow-lg transition duration-300 hover:-translate-y-1 hover:border-orange-500/50 hover:shadow-orange-500/10 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
       :aria-label="`View ${recipe.name} recipe details`"
       @click="goToDetails"
     >
-      <img
-        :src="recipe.image"
-        :alt="recipe.name"
-        class="h-52 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-72"
-      />
+      <div class="overflow-hidden">
+        <img
+          :src="recipe.image"
+          :alt="recipe.name"
+          class="h-52 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-72"
+        />
+      </div>
 
       <div class="p-5 sm:p-6">
         <div
@@ -261,7 +256,9 @@ onMounted(() => {
           </span>
 
           <span>
-            🍽 {{ recipe.servings }} servings
+            🍽
+            {{ recipe.servings }}
+            servings
           </span>
         </div>
       </div>
